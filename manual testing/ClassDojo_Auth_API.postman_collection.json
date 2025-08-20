@@ -1,0 +1,595 @@
+{
+	"info": {
+		"_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+		"name": "ClassDojo Authentication API",
+		"description": "Complete authentication API collection for ClassDojo parent portal including registration, login, email verification, and user type validation.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Health Check",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/v1/auth/health/",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"auth",
+						"health",
+						""
+					]
+				},
+				"description": "Check if the API is healthy and running"
+			},
+			"response": []
+		},
+		{
+			"name": "Parent Registration",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// Store user_id and email for later use",
+							"if (pm.response.code === 201) {",
+							"    const response = pm.response.json();",
+							"    pm.environment.set('user_id', response.user_id);",
+							"    pm.environment.set('test_email', response.email);",
+							"    console.log('Registration successful - User ID:', response.user_id);",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"first_name\": \"John\",\n    \"last_name\": \"Doe\",\n    \"email\": \"john.doe@parent.com\",\n    \"phone_number\": \"1234567890\",\n    \"password\": \"securePassword123\",\n    \"confirm_password\": \"securePassword123\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/v1/auth/register/parent/",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"auth",
+						"register",
+						"parent",
+						""
+					]
+				},
+				"description": "Register a new parent account. Account will be inactive until email is verified."
+			},
+			"response": []
+		},
+		{
+			"name": "Login (Unverified Account)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"email\": \"john.doe@parent.com\",\n    \"password\": \"securePassword123\",\n    \"user_type\": \"parent\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/v1/auth/login/",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"auth",
+						"login",
+						""
+					]
+				},
+				"description": "Attempt to login with unverified account - should fail with email verification message"
+			},
+			"response": []
+		},
+		{
+			"name": "Resend Verification Email",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"email\": \"john.doe@parent.com\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/v1/auth/resend-verification/",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"auth",
+						"resend-verification",
+						""
+					]
+				},
+				"description": "Resend verification email. Has 1-minute rate limiting."
+			},
+			"response": []
+		},
+		{
+			"name": "Email Verification",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// Store JWT tokens for authenticated requests",
+							"if (pm.response.code === 200) {",
+							"    const response = pm.response.json();",
+							"    pm.environment.set('access_token', response.access);",
+							"    pm.environment.set('refresh_token', response.refresh);",
+							"    console.log('Email verified - Tokens stored');",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"token\": \"REPLACE_WITH_ACTUAL_TOKEN_FROM_DATABASE\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/v1/auth/verify-email/",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"auth",
+						"verify-email",
+						""
+					]
+				},
+				"description": "Verify email using the token from database. Get the token using Django shell: User.objects.get(email='john.doe@parent.com').email_verification_token"
+			},
+			"response": []
+		},
+		{
+			"name": "Login (Verified Account)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// Store JWT tokens for authenticated requests",
+							"if (pm.response.code === 200) {",
+							"    const response = pm.response.json();",
+							"    pm.environment.set('access_token', response.access);",
+							"    pm.environment.set('refresh_token', response.refresh);",
+							"    console.log('Login successful - Tokens stored');",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"email\": \"john.doe@parent.com\",\n    \"password\": \"securePassword123\",\n    \"user_type\": \"parent\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/v1/auth/login/",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"auth",
+						"login",
+						""
+					]
+				},
+				"description": "Login with verified account - should succeed and return JWT tokens"
+			},
+			"response": []
+		},
+		{
+			"name": "Login (Wrong Password)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"email\": \"john.doe@parent.com\",\n    \"password\": \"wrongpassword\",\n    \"user_type\": \"parent\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/v1/auth/login/",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"auth",
+						"login",
+						""
+					]
+				},
+				"description": "Test login with wrong password"
+			},
+			"response": []
+		},
+		{
+			"name": "Login (User Type Mismatch)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"email\": \"john.doe@parent.com\",\n    \"password\": \"securePassword123\",\n    \"user_type\": \"teacher\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/v1/auth/login/",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"auth",
+						"login",
+						""
+					]
+				},
+				"description": "Test user type validation - parent account trying to login as teacher"
+			},
+			"response": []
+		},
+		{
+			"name": "Login (No User Type)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"email\": \"john.doe@parent.com\",\n    \"password\": \"securePassword123\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/v1/auth/login/",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"auth",
+						"login",
+						""
+					]
+				},
+				"description": "Login without specifying user_type - should work if email/password are correct"
+			},
+			"response": []
+		},
+		{
+			"name": "Token Refresh",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// Store new access token",
+							"if (pm.response.code === 200) {",
+							"    const response = pm.response.json();",
+							"    pm.environment.set('access_token', response.access);",
+							"    console.log('Token refreshed successfully');",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"refresh\": \"{{refresh_token}}\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/v1/auth/refresh/",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"auth",
+						"refresh",
+						""
+					]
+				},
+				"description": "Refresh access token using refresh token"
+			},
+			"response": []
+		},
+		{
+			"name": "Registration (Duplicate Email)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"first_name\": \"Jane\",\n    \"last_name\": \"Smith\",\n    \"email\": \"john.doe@parent.com\",\n    \"phone_number\": \"0987654321\",\n    \"password\": \"anotherPassword123\",\n    \"confirm_password\": \"anotherPassword123\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/v1/auth/register/parent/",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"auth",
+						"register",
+						"parent",
+						""
+					]
+				},
+				"description": "Test registration with duplicate email - should fail"
+			},
+			"response": []
+		},
+		{
+			"name": "Registration (Password Mismatch)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"first_name\": \"Jane\",\n    \"last_name\": \"Smith\",\n    \"email\": \"jane.smith@parent.com\",\n    \"phone_number\": \"0987654321\",\n    \"password\": \"password123\",\n    \"confirm_password\": \"differentpassword\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/v1/auth/register/parent/",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"auth",
+						"register",
+						"parent",
+						""
+					]
+				},
+				"description": "Test registration with password mismatch - should fail"
+			},
+			"response": []
+		},
+		{
+			"name": "Registration (Missing Fields)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"first_name\": \"Jane\",\n    \"email\": \"jane.smith@parent.com\",\n    \"password\": \"password123\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/v1/auth/register/parent/",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"auth",
+						"register",
+						"parent",
+						""
+					]
+				},
+				"description": "Test registration with missing required fields - should fail"
+			},
+			"response": []
+		},
+		{
+			"name": "Email Verification (Invalid Token)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"token\": \"invalid-uuid-token-12345\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/v1/auth/verify-email/",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"auth",
+						"verify-email",
+						""
+					]
+				},
+				"description": "Test email verification with invalid token - should fail"
+			},
+			"response": []
+		},
+		{
+			"name": "Resend Verification (Rate Limit)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"email\": \"john.doe@parent.com\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/v1/auth/resend-verification/",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"auth",
+						"resend-verification",
+						""
+					]
+				},
+				"description": "Test resend verification rate limiting - call this immediately after another resend request"
+			},
+			"response": []
+		},
+		{
+			"name": "Resend Verification (Invalid Email)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"email\": \"nonexistent@parent.com\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/v1/auth/resend-verification/",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"auth",
+						"resend-verification",
+						""
+					]
+				},
+				"description": "Test resend verification with non-existent email - should fail"
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000",
+			"type": "string"
+		}
+	]
+}

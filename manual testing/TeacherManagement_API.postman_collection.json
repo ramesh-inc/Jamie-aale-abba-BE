@@ -1,0 +1,405 @@
+{
+	"info": {
+		"_postman_id": "teacher-mgmt-12345",
+		"name": "Teacher Management API (Admin Only)",
+		"description": "Admin-only endpoints for teacher management including registration, updates, and password resets.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Admin Login",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// Store admin JWT tokens",
+							"if (pm.response.code === 200) {",
+							"    const response = pm.response.json();",
+							"    pm.environment.set('admin_access_token', response.access);",
+							"    pm.environment.set('admin_refresh_token', response.refresh);",
+							"    pm.environment.set('admin_user_id', response.user.id);",
+							"    console.log('Admin login successful - Tokens stored');",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"email\": \"admin@classdojo.com\",\n    \"password\": \"AdminPass123!\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/v1/auth/login/",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"auth",
+						"login",
+						""
+					]
+				},
+				"description": "Login as admin to get access token for teacher management"
+			},
+			"response": []
+		},
+		{
+			"name": "Register New Teacher",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// Store teacher ID for other requests",
+							"if (pm.response.code === 201) {",
+							"    const response = pm.response.json();",
+							"    pm.environment.set('teacher_id', response.teacher.id);",
+							"    pm.environment.set('teacher_email', response.teacher.email);",
+							"    console.log('Teacher created - ID:', response.teacher.id);",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer {{admin_access_token}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"first_name\": \"John\",\n    \"last_name\": \"Doe\",\n    \"email\": \"john.doe.teacher@classdojo.com\",\n    \"phone_number\": \"555-123-4567\",\n    \"password\": \"TeacherPass123!\",\n    \"confirm_password\": \"TeacherPass123!\",\n    \"subjects\": \"Mathematics, Physics\",\n    \"qualification\": \"Master of Science in Physics\",\n    \"experience_years\": 8,\n    \"employee_id\": \"TCH001\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/v1/admin/teachers/register/",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"admin",
+						"teachers",
+						"register",
+						""
+					]
+				},
+				"description": "Register a new teacher account (Admin only)"
+			},
+			"response": []
+		},
+		{
+			"name": "List All Teachers",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{admin_access_token}}"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/api/v1/admin/teachers/",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"admin",
+						"teachers",
+						""
+					]
+				},
+				"description": "Get list of all teachers (Admin only)"
+			},
+			"response": []
+		},
+		{
+			"name": "Get Teacher Details",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{admin_access_token}}"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/api/v1/admin/teachers/{{teacher_id}}/",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"admin",
+						"teachers",
+						"{{teacher_id}}",
+						""
+					]
+				},
+				"description": "Get specific teacher details (Admin only)"
+			},
+			"response": []
+		},
+		{
+			"name": "Update Teacher Details",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer {{admin_access_token}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"first_name\": \"John\",\n    \"last_name\": \"Doe\",\n    \"phone_number\": \"555-123-4568\",\n    \"subjects\": \"Advanced Mathematics, Physics, Chemistry\",\n    \"qualification\": \"PhD in Physics\",\n    \"experience_years\": 10\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/v1/admin/teachers/{{teacher_id}}/",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"admin",
+						"teachers",
+						"{{teacher_id}}",
+						""
+					]
+				},
+				"description": "Update teacher account details (Admin only)"
+			},
+			"response": []
+		},
+		{
+			"name": "Reset Teacher Password",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer {{admin_access_token}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"new_password\": \"NewTeacherPass123!\",\n    \"confirm_password\": \"NewTeacherPass123!\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/v1/admin/teachers/{{teacher_id}}/reset-password/",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"admin",
+						"teachers",
+						"{{teacher_id}}",
+						"reset-password",
+						""
+					]
+				},
+				"description": "Reset teacher password (Admin only)"
+			},
+			"response": []
+		},
+		{
+			"name": "Deactivate Teacher Account",
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{admin_access_token}}"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/api/v1/admin/teachers/{{teacher_id}}/",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"admin",
+						"teachers",
+						"{{teacher_id}}",
+						""
+					]
+				},
+				"description": "Deactivate teacher account (Admin only) - preserves data but marks as inactive"
+			},
+			"response": []
+		},
+		{
+			"name": "Register Teacher (Missing Fields)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer {{admin_access_token}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"first_name\": \"Jane\",\n    \"email\": \"incomplete@teacher.com\",\n    \"password\": \"TeacherPass123!\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/v1/admin/teachers/register/",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"admin",
+						"teachers",
+						"register",
+						""
+					]
+				},
+				"description": "Test validation - registration with missing required fields"
+			},
+			"response": []
+		},
+		{
+			"name": "Register Teacher (Duplicate Email)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer {{admin_access_token}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"first_name\": \"Jane\",\n    \"last_name\": \"Smith\",\n    \"email\": \"{{teacher_email}}\",\n    \"phone_number\": \"555-999-8888\",\n    \"password\": \"TeacherPass123!\",\n    \"confirm_password\": \"TeacherPass123!\",\n    \"subjects\": \"English Literature\",\n    \"qualification\": \"Master of Arts in English\",\n    \"experience_years\": 3\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/v1/admin/teachers/register/",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"admin",
+						"teachers",
+						"register",
+						""
+					]
+				},
+				"description": "Test validation - registration with duplicate email"
+			},
+			"response": []
+		},
+		{
+			"name": "Access Control Test (Parent Token)",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"// First login as parent to get parent token",
+							"pm.sendRequest({",
+							"    url: pm.environment.get('base_url') + '/api/v1/auth/login/',",
+							"    method: 'POST',",
+							"    header: {",
+							"        'Content-Type': 'application/json'",
+							"    },",
+							"    body: {",
+							"        mode: 'raw',",
+							"        raw: JSON.stringify({",
+							"            email: 'frontend@test.com',",
+							"            password: 'TestPassword123!',",
+							"            user_type: 'parent'",
+							"        })",
+							"    }",
+							"}, (err, response) => {",
+							"    if (!err && response.code === 200) {",
+							"        const data = response.json();",
+							"        pm.environment.set('parent_access_token', data.access);",
+							"    }",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{parent_access_token}}"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/api/v1/admin/teachers/",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"admin",
+						"teachers",
+						""
+					]
+				},
+				"description": "Test access control - parent user trying to access admin endpoints (should fail with 403)"
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8001",
+			"type": "string"
+		}
+	]
+}

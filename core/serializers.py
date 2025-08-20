@@ -1,0 +1,1 @@
+# Core app serializers - authentication is now handled by core.accounts app

@@ -1,0 +1,28 @@
+to create an admin with django shell
+
+1. Run 
+
+python manage.py shell
+
+
+2. copy paste the following.
+from core.models import User, Admin
+user = User.objects.create_user(
+    username='admin@example.com',
+    email='admin@example.com',
+    password='AdminPass123!',
+    first_name='Admin',
+    last_name='User',
+    user_type='admin',
+    is_active=True,
+    email_verified=True
+)
+Admin.objects.create(
+    user=user,
+    admin_level='super_admin',
+    permissions={'manage_users': True, 'manage_teachers': True}
+)
+print(f"Admin created: {user.email}")
+
+
+3. then login using admin login request from postman collection

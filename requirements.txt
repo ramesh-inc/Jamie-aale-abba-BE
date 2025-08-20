@@ -1,0 +1,54 @@
+# Django and Core Dependencies
+Django==5.2.*
+djangorestframework==3.15.*
+django-cors-headers==4.3.*
+python-dotenv==1.0.*
+
+# JWT Authentication
+djangorestframework-simplejwt==5.3.*
+
+# API Documentation
+drf-yasg==1.21.*
+
+# Database
+mysqlclient==2.2.*
+django-extensions==3.2.*
+
+# Async Task Processing
+celery==5.3.*
+redis==5.0.*
+django-redis==5.4.*
+
+# Email and Communication
+django-celery-beat==2.8.*
+
+# Development Tools
+django-debug-toolbar==4.2.*
+ipython==8.17.*
+
+# Testing
+faker==20.1.*
+factory-boy==3.3.*
+coverage==7.3.*
+
+# Security
+django-ratelimit==4.1.*
+
+# Internationalization
+django-modeltranslation==0.19.*
+
+# Utilities
+Pillow==10.4.*
+pytz==2023.3.*
+
+# Production Dependencies (optional)
+gunicorn==21.2.*
+whitenoise==6.6.*
+sentry-sdk==1.38.*
+
+# Development Dependencies (install with: pip install -r requirements-dev.txt)
+# pytest==7.4.*
+# pytest-django==4.7.*
+# black==23.11.*
+# flake8==6.1.*
+# isort==5.12.*
