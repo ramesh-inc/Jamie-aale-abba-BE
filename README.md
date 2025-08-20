@@ -42,16 +42,21 @@ A full-stack web application for managing nursery operations, featuring a Django
 
 Before setting up the project, ensure you have:
 
-- **macOS**: macOS 10.15+ (for Homebrew compatibility)
+### **Cross-Platform Requirements**
 - **Python**: 3.13+ 
 - **Node.js**: 18+ and npm
-- **MySQL**: 8.0+ (optional, SQLite fallback available)
 - **Git**: Version control
-- **Homebrew**: Package manager for macOS
+- **MySQL**: 8.0+ (optional, SQLite fallback available)
 
-## 🍺 Initial System Setup (macOS)
+### **Platform-Specific Requirements**
+- **macOS**: macOS 10.15+ (for Homebrew compatibility)
+- **Windows**: Windows 10+ with PowerShell or Windows Subsystem for Linux (WSL2)
 
-### Install Homebrew and Dependencies
+## 🍺 Initial System Setup
+
+### macOS Setup
+
+#### Install Homebrew and Dependencies
 
 ```bash
 # Install Homebrew (if not already installed)
@@ -75,17 +80,85 @@ npm --version
 mysql --version
 ```
 
+### Windows Setup
+
+#### Option 1: Windows with PowerShell (Recommended)
+
+```powershell
+# Install Chocolatey package manager (if not already installed)
+# Run PowerShell as Administrator
+Set-ExecutionPolicy Bypass -Scope Process -Force
+[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
+iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+
+# Install system dependencies
+choco install python nodejs mysql git redis-64 -y
+
+# Verify installations
+python --version   # Should be 3.13+
+node --version     # Should be 18+
+npm --version
+mysql --version
+
+# Start MySQL service
+net start mysql
+```
+
+#### Option 2: Manual Installation (Windows)
+
+1. **Python 3.13+**: Download from [python.org](https://www.python.org/downloads/)
+   - ✅ Check "Add Python to PATH" during installation
+   - ✅ Choose "Install for all users"
+
+2. **Node.js 18+**: Download from [nodejs.org](https://nodejs.org/)
+   - LTS version recommended
+   - npm is included automatically
+
+3. **Git**: Download from [git-scm.com](https://git-scm.com/download/win)
+   - Choose "Git Bash" during installation
+
+4. **MySQL 8.0+**: Download from [mysql.com](https://dev.mysql.com/downloads/installer/)
+   - Choose "Developer Default" installation
+   - Remember your root password
+
+5. **Redis** (optional): Download from [redis.io](https://redis.io/download) or use [Windows version](https://github.com/microsoftarchive/redis/releases)
+
+#### Option 3: Windows Subsystem for Linux (WSL2)
+
+```bash
+# Install WSL2 (if not already installed)
+# Run in PowerShell as Administrator
+wsl --install -d Ubuntu
+
+# Once in Ubuntu terminal:
+sudo apt update && sudo apt upgrade -y
+
+# Install dependencies
+sudo apt install python3.13 python3-pip python3-venv nodejs npm mysql-server redis-server git pkg-config -y
+
+# Start services
+sudo service mysql start
+sudo service redis-server start
+
+# Verify installations
+python3 --version
+node --version
+npm --version
+mysql --version
+```
+
 ## 🏗️ Project Setup
 
 ### 1. Clone Repository
 
 ```bash
-git clone https://github.com/ramesh-inc/ClassDojo-SAAS.git
-cd ClassDojo-SAAS
+git clone https://github.com/your-username/Jamie-aale-abba-BE.git
+cd Jamie-aale-abba-BE
 ```
 
 ### 2. Backend Setup (Django)
 
+#### macOS/Linux Commands:
 ```bash
 # Create and activate virtual environment
 python3 -m venv venv
@@ -96,6 +169,28 @@ pip install -r requirements.txt
 
 # Create environment file (optional - fallback configurations are provided)
 touch .env
+```
+
+#### Windows Commands:
+```powershell
+# Create virtual environment
+python -m venv venv
+
+# Activate virtual environment (PowerShell)
+venv\Scripts\Activate.ps1
+
+# OR activate in Command Prompt
+venv\Scripts\activate.bat
+
+# OR activate in Git Bash
+source venv/Scripts/activate
+
+# Install Python dependencies
+pip install -r requirements.txt
+
+# Create environment file (optional)
+New-Item .env -ItemType File
+# OR in Command Prompt: type nul > .env
 ```
 
 **Optional `.env` file configuration:**
@@ -120,12 +215,17 @@ CELERY_BROKER_URL=redis://localhost:6379/0
 REDIS_URL=redis://127.0.0.1:6379/1
 ```
 
+#### Database Setup (All Platforms):
 ```bash
-# Database setup
-python manage.py check                    # Verify configuration
-python manage.py makemigrations          # Create migrations
-python manage.py migrate                 # Apply migrations
-python manage.py createsuperuser         # Create admin user
+# Verify configuration
+python manage.py check
+
+# Create and apply migrations
+python manage.py makemigrations
+python manage.py migrate
+
+# Create admin user (interactive)
+python manage.py createsuperuser
 
 # Start Django development server
 python manage.py runserver               # Runs on http://localhost:8000
@@ -178,9 +278,11 @@ python manage.py migrate
 
 ### Development Mode
 
-**Terminal 1 - Backend:**
+#### Backend Server:
+
+**macOS/Linux:**
 ```bash
-cd ClassDojo-Parent-Portal
+cd Jamie-aale-abba-BE
 source venv/bin/activate
 python manage.py runserver
 # Backend API: http://localhost:8000
@@ -188,23 +290,82 @@ python manage.py runserver
 # Admin Panel: http://localhost:8000/admin/
 ```
 
-**Terminal 2 - Frontend:**
+**Windows (PowerShell):**
+```powershell
+cd Jamie-aale-abba-BE
+venv\Scripts\Activate.ps1
+python manage.py runserver
+# Backend API: http://localhost:8000
+# API Documentation: http://localhost:8000/swagger/
+# Admin Panel: http://localhost:8000/admin/
+```
+
+**Windows (Command Prompt):**
+```cmd
+cd Jamie-aale-abba-BE
+venv\Scripts\activate.bat
+python manage.py runserver
+```
+
+#### Frontend Server:
+
+**All Platforms:**
 ```bash
-cd ClassDojo-Parent-Portal/frontend
+cd Jamie-aale-abba-BE/frontend
 npm run dev
 # Frontend App: http://localhost:5173
 ```
 
-### Quick Start (Single Terminal)
+### Quick Start Guide
+
+#### For Impatient Developers 🚀
+
+**Prerequisites**: Python 3.13+, Node.js 18+, Git
 
 ```bash
-# Terminal 1: Start backend
-cd ClassDojo-Parent-Portal
-source venv/bin/activate
-python manage.py runserver &
+# 1. Clone and setup
+git clone https://github.com/your-username/Jamie-aale-abba-BE.git
+cd Jamie-aale-abba-BE
 
-# Terminal 2: Start frontend
+# 2. Backend setup (5 minutes)
+python3 -m venv venv                    # Windows: python -m venv venv
+source venv/bin/activate                # Windows: venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py createsuperuser        # Create admin account
+python manage.py runserver &            # Windows: Start in separate terminal
+
+# 3. Frontend setup (2 minutes)
 cd frontend
+npm install
+npm run dev
+
+# 4. Access the application
+# Frontend: http://localhost:5173
+# Backend API: http://localhost:8000
+# API Docs: http://localhost:8000/swagger/
+# Admin Panel: http://localhost:8000/admin/
+```
+
+#### Multi-Terminal Setup
+
+**Terminal 1 - Backend:**
+```bash
+# macOS/Linux:
+cd Jamie-aale-abba-BE
+source venv/bin/activate
+
+# Windows (PowerShell):
+cd Jamie-aale-abba-BE
+venv\Scripts\Activate.ps1
+
+# All platforms:
+python manage.py runserver
+```
+
+**Terminal 2 - Frontend:**
+```bash
+cd Jamie-aale-abba-BE/frontend
 npm run dev
 ```
 
@@ -224,65 +385,178 @@ npm run preview  # Or serve the dist/ folder with a web server
 ## 📂 Project Structure
 
 ```
-ClassDojo-Parent-Portal/
+Jamie-aale-abba-BE/
 ├── classdojo_project/                   # Django project settings
+│   ├── __init__.py
 │   ├── settings.py                     # Django configuration
 │   ├── urls.py                         # Main URL routing
-│   └── wsgi.py                         # WSGI application
+│   ├── wsgi.py                         # WSGI application
+│   └── asgi.py                         # ASGI application
 ├── core/                               # Main Django app
+│   ├── __init__.py
 │   ├── accounts/                       # Authentication module
-│   │   ├── views.py                   # API views
-│   │   ├── serializers.py             # API serializers
+│   │   ├── __init__.py
+│   │   ├── admin.py                   # Django admin config
+│   │   ├── apps.py                    # App configuration
 │   │   ├── email_service.py           # Email functionality
+│   │   ├── management/                # Custom management commands
+│   │   │   └── commands/
+│   │   │       └── cleanup_unverified_users.py
+│   │   ├── messages.py                # User messages
+│   │   ├── models.py                  # Account models
 │   │   ├── permissions.py             # Custom permissions
+│   │   ├── serializers.py             # API serializers
+│   │   ├── services.py                # Business logic
+│   │   ├── tests.py                   # Unit tests
+│   │   ├── timezone_utils.py          # Timezone utilities
+│   │   ├── urls.py                    # Account URLs
 │   │   ├── utils.py                   # Utility functions
-│   │   └── validators.py              # Custom validators
-│   ├── models.py                      # Database models
-│   └── urls.py                        # App URL routing
+│   │   ├── validators.py              # Custom validators
+│   │   └── views.py                   # API views
+│   ├── admin.py                       # Core admin config
+│   ├── apps.py                        # App configuration
+│   ├── middleware.py                  # Custom middleware
+│   ├── migrations/                    # Database migrations
+│   ├── models.py                      # Core database models
+│   ├── serializers.py                # Core serializers
+│   ├── tests.py                       # Core tests
+│   ├── urls.py                        # Core URL routing
+│   └── views.py                       # Core views
 ├── frontend/                           # React application
+│   ├── dist/                          # Built frontend files
+│   ├── node_modules/                  # npm dependencies
+│   ├── public/                        # Static assets
+│   │   └── vite.svg
 │   ├── src/
+│   │   ├── assets/                    # Images and static files
+│   │   │   ├── logo.png
+│   │   │   ├── page_images/
+│   │   │   └── react.svg
 │   │   ├── components/                # React components
 │   │   │   ├── auth/                 # Authentication components
+│   │   │   │   ├── ParentRegistrationForm.tsx
+│   │   │   │   ├── ProtectedRoute.tsx
+│   │   │   │   ├── RegistrationSuccess.tsx
+│   │   │   │   └── TeacherPasswordChangeForm.tsx
 │   │   │   └── ui/                   # Reusable UI components
+│   │   │       ├── FormField.tsx
+│   │   │       └── LoadingSpinner.tsx
 │   │   ├── pages/                    # Page components
+│   │   │   ├── DashboardPage.tsx
+│   │   │   ├── EmailVerificationPage.tsx
+│   │   │   ├── LoginPage.tsx
+│   │   │   ├── RegisterPage.tsx
+│   │   │   ├── RegistrationSuccessPage.tsx
+│   │   │   ├── TeacherDashboardPage.tsx
+│   │   │   └── TeacherPasswordChangePage.tsx
 │   │   ├── services/                 # API services
+│   │   │   └── api.ts
 │   │   ├── types/                    # TypeScript types
+│   │   │   ├── auth.ts
+│   │   │   └── auth-backup.ts
 │   │   ├── utils/                    # Utility functions
-│   │   └── App.tsx                   # Main app component
-│   ├── public/                       # Static assets
+│   │   │   ├── auth.ts
+│   │   │   └── validation.ts
+│   │   ├── App.css                   # App styles
+│   │   ├── App.tsx                   # Main app component
+│   │   ├── index.css                 # Global styles
+│   │   ├── main.tsx                  # App entry point
+│   │   └── vite-env.d.ts            # Vite type definitions
+│   ├── .gitignore                    # Frontend git ignore
+│   ├── README.md                     # Frontend documentation
+│   ├── eslint.config.js              # ESLint configuration
+│   ├── index.html                    # HTML template
+│   ├── package-lock.json             # npm lock file
 │   ├── package.json                  # npm dependencies
+│   ├── postcss.config.js             # PostCSS configuration
 │   ├── tailwind.config.js            # Tailwind CSS config
-│   ├── vite.config.ts                # Vite configuration
-│   └── .env                          # Environment variables
-├── templates/                          # Django email templates
-├── static/                            # Static files
-├── media/                             # User uploads
-├── logs/                              # Application logs
-├── .vscode/                           # VS Code settings
-├── .idea/                             # PyCharm settings
-├── requirements.txt                   # Python dependencies
-├── manage.py                          # Django management
-├── .env                               # Environment variables (optional)
-├── .gitignore                         # Git ignore rules
-└── README.md                          # This file
+│   ├── tsconfig.app.json             # TypeScript app config
+│   ├── tsconfig.json                 # TypeScript base config
+│   ├── tsconfig.node.json            # TypeScript node config
+│   └── vite.config.ts                # Vite configuration
+├── manual testing/                    # API testing files
+│   ├── ClassDojo_Auth_API.postman_collection.json
+│   ├── ClassDojo_Auth_Local.postman_environment.json
+│   ├── Teacher_Auth_API.postman_collection.json
+│   ├── Teacher_Auth_Environment.postman_environment.json
+│   ├── Teacher_Auth_Testing_Guide.md
+│   ├── TeacherManagement_API.postman_collection.json
+│   └── shell admin creation.txt
+├── templates/                         # Django HTML templates
+│   ├── base.html
+│   ├── core/
+│   │   ├── dashboard.html
+│   │   └── home.html
+│   ├── emails/
+│   │   └── email_verification.html
+│   └── registration/
+│       └── login.html
+├── static/                           # Django static files
+│   ├── css/
+│   └── js/
+├── media/                            # User uploads
+├── logs/                             # Application logs
+│   ├── django.log
+│   └── error.log
+├── venv/                             # Python virtual environment
+├── backup.sql                       # Database backup
+├── db.sqlite3                       # SQLite database (development)
+├── IMPLEMENTATION_SUMMARY.md         # Implementation documentation
+├── manage.py                         # Django management script
+├── requirements.txt                  # Python dependencies
+├── .env                              # Environment variables (optional)
+├── .gitignore                        # Git ignore rules
+└── README.md                         # This file
 ```
 
 ## 🔌 API Endpoints
 
 ### Authentication Endpoints
 ```
-POST /api/v1/auth/register/parent/     # Parent registration
-POST /api/v1/auth/verify-email/        # Email verification
-POST /api/v1/auth/resend-verification/ # Resend verification
-POST /api/v1/auth/login/               # User login
-GET  /api/v1/auth/profile/             # User profile
-GET  /api/v1/auth/health/              # Health check
+POST /api/v1/auth/register/parent/           # Parent registration
+POST /api/v1/auth/verify-email/              # Email verification
+POST /api/v1/auth/resend-verification/       # Resend verification
+POST /api/v1/auth/login/                     # User login (parents & teachers)
+POST /api/v1/auth/refresh/                   # JWT token refresh
+GET  /api/v1/auth/health/                    # Health check
+```
+
+### Teacher Endpoints
+```
+POST /api/v1/auth/teacher/change-password/   # Teacher password change (first login)
+GET  /api/v1/admin/teachers/                 # List all teachers (admin only)
+POST /api/v1/admin/teachers/register/        # Register new teacher (admin only)
+GET  /api/v1/admin/teachers/{id}/            # Get teacher details (admin only)
+PUT  /api/v1/admin/teachers/{id}/            # Update teacher (admin only)
+DELETE /api/v1/admin/teachers/{id}/          # Deactivate teacher (admin only)
+POST /api/v1/admin/teachers/{id}/reset-password/ # Reset teacher password (admin only)
 ```
 
 ### API Documentation
 - **Swagger UI**: http://localhost:8000/swagger/
 - **ReDoc**: http://localhost:8000/redoc/
 - **OpenAPI Schema**: http://localhost:8000/swagger.json
+
+### API Testing with Postman
+The project includes Postman collections for comprehensive API testing:
+
+**Files Location**: `/manual testing/`
+- `Teacher_Auth_API.postman_collection.json` - Teacher authentication tests
+- `Teacher_Auth_Environment.postman_environment.json` - Environment variables
+- `Teacher_Auth_Testing_Guide.md` - Detailed testing guide
+
+**Import Instructions**:
+1. Open Postman
+2. Import both collection and environment files
+3. Update environment variables with your test data
+4. Run individual tests or complete workflows
+
+**Test Coverage**:
+- ✅ Teacher login flow
+- ✅ Password change requirements
+- ✅ First login workflow
+- ✅ Error handling
+- ✅ JWT token management
 
 ## 🧪 Testing
 
@@ -360,7 +634,9 @@ npm run type-check                   # TypeScript check (if configured)
 
 ## 🐛 Troubleshooting
 
-### Common Issues
+### Platform-Specific Issues
+
+#### macOS/Linux Issues
 
 **1. Backend Won't Start:**
 ```bash
@@ -376,13 +652,99 @@ python manage.py showmigrations
 python manage.py migrate
 ```
 
-**2. Frontend Won't Start:**
+**2. Permission Issues:**
+```bash
+# Fix Django permissions
+chmod +x manage.py
+
+# Fix directory permissions
+chmod -R 755 static/ media/ templates/
+```
+
+**3. MySQL Service Issues (macOS):**
+```bash
+# Check if MySQL is running
+brew services list | grep mysql
+brew services start mysql
+
+# Restart if needed
+brew services restart mysql
+```
+
+#### Windows-Specific Issues
+
+**1. Virtual Environment Activation Issues:**
+```powershell
+# If PowerShell execution policy prevents activation
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+
+# Alternative activation methods
+# PowerShell
+venv\Scripts\Activate.ps1
+
+# Command Prompt
+venv\Scripts\activate.bat
+
+# Git Bash
+source venv/Scripts/activate
+```
+
+**2. Python/pip Not Found:**
+```powershell
+# Add Python to PATH manually
+# Go to: System Properties > Environment Variables > PATH
+# Add: C:\Users\YourName\AppData\Local\Programs\Python\Python313\
+# Add: C:\Users\YourName\AppData\Local\Programs\Python\Python313\Scripts\
+
+# Verify installation
+python --version
+pip --version
+```
+
+**3. MySQL Connection Issues (Windows):**
+```powershell
+# Check if MySQL service is running
+Get-Service MySQL*
+
+# Start MySQL service
+net start mysql
+
+# Or using services.msc GUI
+services.msc
+```
+
+**4. Port Already in Use (Windows):**
+```powershell
+# Find process using port 8000
+netstat -ano | findstr :8000
+
+# Kill process (replace PID with actual process ID)
+taskkill /PID {PID} /F
+```
+
+**5. Long Path Issues (Windows):**
+```powershell
+# Enable long paths in Windows 10/11
+# Run as Administrator
+New-ItemProperty -Path "HKLM:SYSTEM\CurrentControlSet\Control\FileSystem" -Name "LongPathsEnabled" -Value 1 -PropertyType DWORD -Force
+```
+
+### Common Cross-Platform Issues
+
+**1. Frontend Won't Start:**
 ```bash
 # Clear npm cache
 npm cache clean --force
 
 # Delete node_modules and reinstall
+# Linux/macOS:
 rm -rf node_modules package-lock.json
+
+# Windows:
+rmdir /s node_modules
+del package-lock.json
+
+# Reinstall
 npm install
 
 # Check Node/npm versions
@@ -390,33 +752,50 @@ node --version  # Should be 18+
 npm --version
 ```
 
-**3. Database Connection Issues:**
+**2. Database Connection Issues:**
 ```bash
 # For SQLite (default): No setup needed
-# For MySQL: Check if MySQL is running
-brew services list | grep mysql
-brew services start mysql
-
 # Test Django database connection
 python manage.py dbshell
+
+# Check database settings
+python manage.py check --database
 ```
 
-**4. API Connection Issues:**
+**3. API Connection Issues:**
 ```bash
 # Check if backend is running
+# Linux/macOS:
 curl http://localhost:8000/api/v1/auth/health/
+
+# Windows (PowerShell):
+Invoke-WebRequest -Uri http://localhost:8000/api/v1/auth/health/
 
 # Check CORS settings in Django settings.py
 # Ensure frontend URL is in CORS_ALLOWED_ORIGINS
 ```
 
-**5. Permission Issues:**
+**4. Module Not Found Errors:**
 ```bash
-# Fix Django permissions
-chmod +x manage.py
+# Ensure virtual environment is activated
+# Reinstall requirements
+pip install -r requirements.txt
 
-# Fix directory permissions
-chmod -R 755 static/ media/ templates/
+# Force reinstall if needed
+pip install -r requirements.txt --force-reinstall
+
+# Clear pip cache
+pip cache purge
+```
+
+**5. SSL/TLS Certificate Issues:**
+```bash
+# Upgrade pip and certificates
+python -m pip install --upgrade pip
+pip install --upgrade certifi
+
+# For corporate networks, disable SSL verification (temporary)
+pip install -r requirements.txt --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org
 ```
 
 ### Environment-Specific Issues
@@ -491,10 +870,6 @@ VITE_ENABLE_DEBUG=false
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
 ## 📞 Support
 
 For support, email support@classdojo.com or create an issue in the GitHub repository.
@@ -502,3 +877,4 @@ For support, email support@classdojo.com or create an issue in the GitHub reposi
 ---
 
 **Made with ❤️ by the ClassDojo Team**
+

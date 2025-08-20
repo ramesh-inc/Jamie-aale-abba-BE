@@ -23,9 +23,9 @@ const RegistrationSuccessPage: React.FC = () => {
       setResendMessage('');
       await resendVerification(email);
       setResendMessage('Verification email sent successfully! Please check your inbox.');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Resend verification failed:', error);
-      const errorData = error.response?.data;
+      const errorData = (error as any)?.response?.data;
       
       if (errorData?.error?.includes('wait')) {
         setResendMessage('Please wait before requesting another verification email.');

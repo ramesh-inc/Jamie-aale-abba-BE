@@ -40,9 +40,9 @@ const EmailVerificationPage: React.FC = () => {
         navigate('/dashboard');
       }, 3000);
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Email verification failed:', error);
-      const errorData = error.response?.data;
+      const errorData = (error as any)?.response?.data;
       
       if (errorData?.error?.includes('expired')) {
         setStatus('expired');
@@ -64,9 +64,9 @@ const EmailVerificationPage: React.FC = () => {
       setIsResending(true);
       await resendVerification(userEmail);
       setMessage('Verification email sent successfully! Please check your inbox.');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Resend verification failed:', error);
-      const errorData = error.response?.data;
+      const errorData = (error as any)?.response?.data;
       setMessage(errorData?.error || 'Failed to resend verification email. Please try again.');
     } finally {
       setIsResending(false);

@@ -4,7 +4,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { parentRegistrationSchema } from '../../utils/validation';
 import { authApi } from '../../services/api';
 import LoadingSpinner from '../ui/LoadingSpinner';
-import type { ParentRegistrationData, ApiError } from '../../types/auth';
+import type { ParentRegistrationData } from '../../types/auth';
 
 interface ParentRegistrationFormProps {
   onSuccess?: (email: string) => void;
@@ -47,13 +47,13 @@ export const ParentRegistrationForm: React.FC<ParentRegistrationFormProps> = ({
       if (onSuccess) {
         onSuccess(data.email);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Registration failed:', error);
 
-      if (error.response?.data) {
-        const errorData: ApiError = error.response.data;
+      if ((error as any)?.response?.data) {
+        const errorData = (error as any).response.data;
         
-        // Handle field-specific errors
+        // Handle field-specific errors from our custom API error format
         if (errorData.errors) {
           Object.entries(errorData.errors).forEach(([field, messages]) => {
             const fieldName = field === 'first_name' ? 'firstName' :
@@ -65,7 +65,24 @@ export const ParentRegistrationForm: React.FC<ParentRegistrationFormProps> = ({
             if (fieldName in data) {
               setError(fieldName as keyof ParentRegistrationData, {
                 type: 'server',
-                message: messages[0],
+                message: (messages as string[])[0],
+              });
+            }
+          });
+        }
+        // Handle direct field errors from Django REST Framework serializers
+        else if (typeof errorData === 'object' && !errorData.message && !errorData.error) {
+          Object.entries(errorData).forEach(([field, messages]) => {
+            const fieldName = field === 'first_name' ? 'firstName' :
+                            field === 'last_name' ? 'lastName' :
+                            field === 'phone_number' ? 'phoneNumber' :
+                            field === 'confirm_password' ? 'confirmPassword' :
+                            field;
+            
+            if (fieldName in data) {
+              setError(fieldName as keyof ParentRegistrationData, {
+                type: 'server',
+                message: Array.isArray(messages) ? messages[0] : messages as string,
               });
             }
           });
@@ -75,8 +92,8 @@ export const ParentRegistrationForm: React.FC<ParentRegistrationFormProps> = ({
         if (errorData.message) {
           setSubmitError(errorData.message);
         }
-      } else if (error.message) {
-        setSubmitError(error.message);
+      } else if ((error as any)?.message) {
+        setSubmitError((error as any).message);
       } else {
         setSubmitError('Registration failed. Please try again.');
       }

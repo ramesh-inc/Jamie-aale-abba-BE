@@ -20,7 +20,7 @@ const TeacherPasswordChangeForm: React.FC<TeacherPasswordChangeFormProps> = ({
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [success, setSuccess] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     
@@ -37,7 +37,7 @@ const TeacherPasswordChangeForm: React.FC<TeacherPasswordChangeFormProps> = ({
     setSuccess(false);
 
     try {
-      const response = await authApi.teacherChangePassword(formData);
+      await authApi.teacherChangePassword(formData);
       
       setSuccess(true);
       
@@ -46,10 +46,10 @@ const TeacherPasswordChangeForm: React.FC<TeacherPasswordChangeFormProps> = ({
         onPasswordChanged();
       }, 2000);
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Password change error:', error);
       
-      const errorData = error.response?.data;
+      const errorData = (error as any)?.response?.data;
       
       if (errorData) {
         // Handle field-specific errors

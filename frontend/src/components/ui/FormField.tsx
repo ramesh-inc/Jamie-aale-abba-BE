@@ -47,7 +47,7 @@ export const FormField: React.FC<FormFieldProps> = ({
 
       {children ? (
         <div className="relative">
-          {React.cloneElement(children as React.ReactElement<any>, {
+          {React.cloneElement(children as React.ReactElement<Record<string, unknown>>, {
             id: fieldId,
             name,
             value,

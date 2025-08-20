@@ -19,8 +19,8 @@ export const RegistrationSuccess: React.FC<RegistrationSuccessProps> = ({ email 
     try {
       await authApi.resendVerification(email);
       setResendMessage('Verification email sent successfully! Please check your inbox.');
-    } catch (error: any) {
-      setResendError(error.response?.data?.message || 'Failed to resend verification email. Please try again.');
+    } catch (error: unknown) {
+      setResendError((error as any)?.response?.data?.message || 'Failed to resend verification email. Please try again.');
     } finally {
       setIsResending(false);
     }

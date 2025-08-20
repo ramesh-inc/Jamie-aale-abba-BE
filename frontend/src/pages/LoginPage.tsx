@@ -49,10 +49,10 @@ const LoginPage: React.FC = () => {
       } else {
         navigate('/dashboard');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Login error:', error);
       
-      const errorData = error.response?.data;
+      const errorData = (error as any)?.response?.data;
       
       if (errorData?.user_type_mismatch) {
         // Handle user type mismatch error
