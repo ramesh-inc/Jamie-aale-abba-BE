@@ -1,0 +1,316 @@
+{
+	"info": {
+		"_postman_id": "admin-management-api-collection",
+		"name": "Jamie Aale Abba - Admin Management API",
+		"description": "Admin endpoints for managing teachers and other admins (Super Admin access required)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000/api/v1",
+			"type": "string"
+		},
+		{
+			"key": "access_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "teacher_id",
+			"value": "1",
+			"type": "string"
+		},
+		{
+			"key": "admin_id",
+			"value": "1",
+			"type": "string"
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{access_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"item": [
+		{
+			"name": "Teacher Management",
+			"item": [
+				{
+					"name": "Create Teacher",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"first_name\": \"Jane\",\n    \"last_name\": \"Smith\",\n    \"email\": \"jane.smith@school.com\",\n    \"phone_number\": \"+1234567891\",\n    \"password\": \"temppassword123\",\n    \"confirm_password\": \"temppassword123\",\n    \"subjects\": [\"Mathematics\", \"Physics\"],\n    \"employee_id\": \"T001\",\n    \"qualification\": \"Master of Science in Mathematics\",\n    \"experience_years\": 5,\n    \"hire_date\": \"2024-01-15\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/teachers/register/",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "teachers", "register", ""]
+						},
+						"description": "Create a new teacher account (Admin only)"
+					}
+				},
+				{
+					"name": "List Teachers",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/admin/teachers/",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "teachers", ""]
+						},
+						"description": "Get list of all teachers (Admin only)"
+					}
+				},
+				{
+					"name": "Get Teacher Details",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/admin/teachers/{{teacher_id}}/",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "teachers", "{{teacher_id}}", ""]
+						},
+						"description": "Get specific teacher details (Admin only)"
+					}
+				},
+				{
+					"name": "Update Teacher",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"first_name\": \"Jane\",\n    \"last_name\": \"Smith\",\n    \"phone_number\": \"+1234567891\",\n    \"subjects\": [\"Mathematics\", \"Physics\", \"Chemistry\"],\n    \"qualification\": \"PhD in Mathematics\",\n    \"experience_years\": 6,\n    \"is_active\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/teachers/{{teacher_id}}/",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "teachers", "{{teacher_id}}", ""]
+						},
+						"description": "Update teacher information (Admin only)"
+					}
+				},
+				{
+					"name": "Delete Teacher",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/admin/teachers/{{teacher_id}}/",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "teachers", "{{teacher_id}}", ""]
+						},
+						"description": "Delete teacher account (Admin only)"
+					}
+				},
+				{
+					"name": "Reset Teacher Password",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"new_password\": \"newteacherpassword123\",\n    \"confirm_password\": \"newteacherpassword123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/teachers/{{teacher_id}}/reset-password/",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "teachers", "{{teacher_id}}", "reset-password", ""]
+						},
+						"description": "Reset teacher password (Admin only)"
+					}
+				}
+			]
+		},
+		{
+			"name": "Admin Management",
+			"item": [
+				{
+					"name": "Create Admin",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"first_name\": \"Bob\",\n    \"last_name\": \"Wilson\",\n    \"email\": \"bob.wilson@school.com\",\n    \"phone_number\": \"+1234567892\",\n    \"password\": \"tempadminpass123\",\n    \"confirm_password\": \"tempadminpass123\",\n    \"admin_level\": \"admin\",\n    \"permissions\": {\n        \"can_manage_teachers\": true,\n        \"can_manage_students\": true,\n        \"can_view_reports\": true\n    }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/admins/register/",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "admins", "register", ""]
+						},
+						"description": "Create a new admin account (Super Admin only)"
+					}
+				},
+				{
+					"name": "List Admins",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/admin/admins/",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "admins", ""]
+						},
+						"description": "Get list of all admins (Super Admin only)"
+					}
+				},
+				{
+					"name": "Get Admin Details",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/admin/admins/{{admin_id}}/",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "admins", "{{admin_id}}", ""]
+						},
+						"description": "Get specific admin details (Super Admin only)"
+					}
+				},
+				{
+					"name": "Update Admin",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"first_name\": \"Robert\",\n    \"last_name\": \"Wilson\",\n    \"phone_number\": \"+1234567892\",\n    \"admin_level\": \"admin\",\n    \"permissions\": {\n        \"can_manage_teachers\": true,\n        \"can_manage_students\": true,\n        \"can_view_reports\": true,\n        \"can_manage_finances\": true\n    },\n    \"is_active\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/admins/{{admin_id}}/",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "admins", "{{admin_id}}", ""]
+						},
+						"description": "Update admin information (Super Admin only)"
+					}
+				},
+				{
+					"name": "Delete Admin",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/admin/admins/{{admin_id}}/",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "admins", "{{admin_id}}", ""]
+						},
+						"description": "Delete admin account (Super Admin only)"
+					}
+				},
+				{
+					"name": "Reset Admin Password",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"new_password\": \"newadminpassword123\",\n    \"confirm_password\": \"newadminpassword123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/admins/{{admin_id}}/reset-password/",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "admins", "{{admin_id}}", "reset-password", ""]
+						},
+						"description": "Reset admin password (Super Admin only)"
+					}
+				}
+			]
+		}
+	]
+}

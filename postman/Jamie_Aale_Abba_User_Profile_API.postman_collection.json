@@ -1,0 +1,172 @@
+{
+	"info": {
+		"_postman_id": "user-profile-api-collection",
+		"name": "Jamie Aale Abba - User Profile API",
+		"description": "User profile and password management endpoints",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000/api/v1",
+			"type": "string"
+		},
+		{
+			"key": "access_token",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{access_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"item": [
+		{
+			"name": "Get User Profile",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/auth/profile/",
+					"host": ["{{base_url}}"],
+					"path": ["auth", "profile", ""]
+				},
+				"description": "Get current user's profile information"
+			}
+		},
+		{
+			"name": "Update Profile",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"first_name\": \"John\",\n    \"last_name\": \"Doe\",\n    \"phone_number\": \"+1234567890\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/auth/profile/update/",
+					"host": ["{{base_url}}"],
+					"path": ["auth", "profile", "update", ""]
+				},
+				"description": "Update current user's profile information"
+			}
+		},
+		{
+			"name": "Parent Change Password",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"current_password\": \"currentpassword123\",\n    \"new_password\": \"newsecurepassword123\",\n    \"confirm_password\": \"newsecurepassword123\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/auth/parent/change-password/",
+					"host": ["{{base_url}}"],
+					"path": ["auth", "parent", "change-password", ""]
+				},
+				"description": "Change password for parent user"
+			}
+		},
+		{
+			"name": "Teacher Change Password",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"current_password\": \"currentpassword123\",\n    \"new_password\": \"newsecurepassword123\",\n    \"confirm_password\": \"newsecurepassword123\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/auth/teacher/change-password/",
+					"host": ["{{base_url}}"],
+					"path": ["auth", "teacher", "change-password", ""]
+				},
+				"description": "Change password for teacher user"
+			}
+		},
+		{
+			"name": "Admin Change Password",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"current_password\": \"currentpassword123\",\n    \"new_password\": \"newsecurepassword123\",\n    \"confirm_password\": \"newsecurepassword123\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/auth/admin/change-password/",
+					"host": ["{{base_url}}"],
+					"path": ["auth", "admin", "change-password", ""]
+				},
+				"description": "Change password for admin user (first-time or regular change)"
+			}
+		},
+		{
+			"name": "Debug User Info",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/debug/user/",
+					"host": ["{{base_url}}"],
+					"path": ["debug", "user", ""]
+				},
+				"description": "Debug endpoint to get detailed user information"
+			}
+		}
+	]
+}

@@ -1,0 +1,248 @@
+{
+	"info": {
+		"_postman_id": "auth-api-collection",
+		"name": "Jamie Aale Abba - Authentication API",
+		"description": "Authentication endpoints for Jamie Aale Abba School Management System",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000/api/v1",
+			"type": "string"
+		},
+		{
+			"key": "access_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "refresh_token",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{access_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"item": [
+		{
+			"name": "Health Check",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/auth/health/",
+					"host": ["{{base_url}}"],
+					"path": ["auth", "health", ""]
+				},
+				"description": "Check if the API is running"
+			}
+		},
+		{
+			"name": "Parent Registration",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"first_name\": \"John\",\n    \"last_name\": \"Doe\",\n    \"email\": \"john.doe@example.com\",\n    \"phone_number\": \"+1234567890\",\n    \"password\": \"securepassword123\",\n    \"confirm_password\": \"securepassword123\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/auth/register/parent/",
+					"host": ["{{base_url}}"],
+					"path": ["auth", "register", "parent", ""]
+				},
+				"description": "Register a new parent account"
+			}
+		},
+		{
+			"name": "Email Verification",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"token\": \"verification_token_here\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/auth/verify-email/",
+					"host": ["{{base_url}}"],
+					"path": ["auth", "verify-email", ""]
+				},
+				"description": "Verify email address with token"
+			}
+		},
+		{
+			"name": "Resend Email Verification",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"email\": \"john.doe@example.com\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/auth/resend-verification/",
+					"host": ["{{base_url}}"],
+					"path": ["auth", "resend-verification", ""]
+				},
+				"description": "Resend email verification token"
+			}
+		},
+		{
+			"name": "Login",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"if (pm.response.code === 200) {",
+							"    const response = pm.response.json();",
+							"    pm.collectionVariables.set('access_token', response.access);",
+							"    pm.collectionVariables.set('refresh_token', response.refresh);",
+							"    console.log('Tokens saved to collection variables');",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"email\": \"john.doe@example.com\",\n    \"password\": \"securepassword123\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/auth/login/",
+					"host": ["{{base_url}}"],
+					"path": ["auth", "login", ""]
+				},
+				"description": "Login with email and password"
+			}
+		},
+		{
+			"name": "Token Refresh",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"if (pm.response.code === 200) {",
+							"    const response = pm.response.json();",
+							"    pm.collectionVariables.set('access_token', response.access);",
+							"    console.log('Access token refreshed');",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"refresh\": \"{{refresh_token}}\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/auth/refresh/",
+					"host": ["{{base_url}}"],
+					"path": ["auth", "refresh", ""]
+				},
+				"description": "Refresh access token using refresh token"
+			}
+		},
+		{
+			"name": "Forgot Password Request",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"email\": \"john.doe@example.com\",\n    \"user_type\": \"parent\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/auth/forgot-password/",
+					"host": ["{{base_url}}"],
+					"path": ["auth", "forgot-password", ""]
+				},
+				"description": "Request password reset email"
+			}
+		},
+		{
+			"name": "Validate Reset Token",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/auth/validate-reset-token/reset_token_uuid_here/",
+					"host": ["{{base_url}}"],
+					"path": ["auth", "validate-reset-token", "reset_token_uuid_here", ""]
+				},
+				"description": "Validate password reset token"
+			}
+		},
+		{
+			"name": "Reset Password",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"token\": \"reset_token_uuid_here\",\n    \"new_password\": \"newsecurepassword123\",\n    \"confirm_password\": \"newsecurepassword123\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/auth/reset-password/",
+					"host": ["{{base_url}}"],
+					"path": ["auth", "reset-password", ""]
+				},
+				"description": "Reset password using reset token"
+			}
+		}
+	]
+}
