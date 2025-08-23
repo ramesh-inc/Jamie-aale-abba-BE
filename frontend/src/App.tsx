@@ -6,6 +6,9 @@ import RegistrationSuccessPage from './pages/RegistrationSuccessPage';
 import DashboardPage from './pages/DashboardPage';
 import TeacherDashboardPage from './pages/TeacherDashboardPage';
 import TeacherPasswordChangePage from './pages/TeacherPasswordChangePage';
+import AdminDashboardPage from './pages/AdminDashboardPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import PasswordResetPage from './pages/PasswordResetPage';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import { AuthTokenManager } from './utils/auth';
 
@@ -23,6 +26,9 @@ function App() {
         return "/teacher-change-password";
       }
       return "/teacher-dashboard";
+    }
+    if (userData?.user_type === 'admin') {
+      return "/admin-dashboard";
     }
     return "/dashboard";
   };
@@ -49,6 +55,20 @@ function App() {
           <Route 
             path="/verify-email/:token" 
             element={<EmailVerificationPage />} 
+          />
+          
+          {/* Password Reset Routes - Public */}
+          <Route 
+            path="/forgot-password" 
+            element={
+              isAuthenticated ? <Navigate to={getDashboardPath()} replace /> : <ForgotPasswordPage />
+            } 
+          />
+          <Route 
+            path="/reset-password/:token" 
+            element={
+              isAuthenticated ? <Navigate to={getDashboardPath()} replace /> : <PasswordResetPage />
+            } 
           />
           
           {/* Registration Success Route - Public */}
@@ -81,6 +101,15 @@ function App() {
             element={
               <ProtectedRoute requiredUserType="teacher">
                 <TeacherPasswordChangePage />
+              </ProtectedRoute>
+            } 
+          />
+
+          <Route 
+            path="/admin-dashboard" 
+            element={
+              <ProtectedRoute requiredUserType="admin">
+                <AdminDashboardPage />
               </ProtectedRoute>
             } 
           />

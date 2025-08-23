@@ -35,6 +35,11 @@ export class AuthTokenManager {
     }
   }
 
+  // Set user data only
+  static setUser(user: User): void {
+    localStorage.setItem(USER_KEY, JSON.stringify(user));
+  }
+
   // Check if user is authenticated
   static isAuthenticated(): boolean {
     const token = this.getAccessToken();
@@ -47,6 +52,11 @@ export class AuthTokenManager {
     localStorage.removeItem(ACCESS_TOKEN_KEY);
     localStorage.removeItem(REFRESH_TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
+  }
+
+  // Alias for clearAuth
+  static clearTokens(): void {
+    this.clearAuth();
   }
 
   // Check if token is expired (basic check - in production you'd decode JWT)

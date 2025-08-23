@@ -65,7 +65,19 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   // Redirect to appropriate dashboard if user type doesn't match
   if (!hasCorrectUserType) {
     const userData = AuthTokenManager.getUser();
-    const correctPath = userData?.user_type === 'teacher' ? '/teacher-dashboard' : '/dashboard';
+    let correctPath = '/dashboard';
+    
+    if (userData?.user_type === 'teacher') {
+      // Check if teacher needs to change password first
+      if (userData.teacher_profile?.password_change_required) {
+        correctPath = '/teacher-change-password';
+      } else {
+        correctPath = '/teacher-dashboard';
+      }
+    } else if (userData?.user_type === 'admin') {
+      correctPath = '/admin-dashboard';
+    }
+    
     return (
       <Navigate 
         to={correctPath} 

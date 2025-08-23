@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { resendVerification } from '../services/api';
 import LoadingSpinner from '../components/ui/LoadingSpinner';

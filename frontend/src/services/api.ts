@@ -1,5 +1,19 @@
 import axios from 'axios';
-import type { ParentRegistrationData, RegistrationResponse, LoginData, LoginResponse, TeacherPasswordChangeData } from '../types/auth';
+import type { 
+  ParentRegistrationData, 
+  RegistrationResponse, 
+  LoginData, 
+  LoginResponse, 
+  TeacherPasswordChangeData,
+  AdminPasswordChangeData,
+  AdminRegistrationData,
+  TeacherRegistrationData,
+  AdminResponse,
+  TeacherResponse,
+  PasswordResetRequestData,
+  PasswordResetConfirmData,
+  TokenValidationResponse
+} from '../types/auth';
 
 // Create axios instance with base configuration
 const api = axios.create({
@@ -74,8 +88,166 @@ export const authApi = {
     return response.data;
   },
 
+  parentChangePassword: async (data: any) => {
+    const response = await api.post('/auth/parent/change-password/', data);
+    return response.data;
+  },
+
   teacherChangePassword: async (data: TeacherPasswordChangeData) => {
     const response = await api.post('/auth/teacher/change-password/', data);
+    return response.data;
+  },
+
+  adminChangePassword: async (data: AdminPasswordChangeData) => {
+    const response = await api.post('/auth/admin/change-password/', data);
+    return response.data;
+  },
+
+  // Password reset functions
+  requestPasswordReset: async (data: PasswordResetRequestData) => {
+    const response = await api.post('/auth/forgot-password/', data);
+    return response.data;
+  },
+
+  confirmPasswordReset: async (data: PasswordResetConfirmData) => {
+    const response = await api.post('/auth/reset-password/', data);
+    return response.data;
+  },
+
+  validateResetToken: async (token: string): Promise<TokenValidationResponse> => {
+    const response = await api.get(`/auth/validate-reset-token/${token}/`);
+    return response.data;
+  },
+};
+
+// Admin API functions (Super Admin only)
+export const adminApi = {
+  // Admin management
+  createAdmin: async (data: AdminRegistrationData): Promise<AdminResponse> => {
+    const payload = {
+      first_name: data.firstName,
+      last_name: data.lastName,
+      email: data.email,
+      phone_number: data.phoneNumber,
+      password: data.password,
+      confirm_password: data.confirmPassword,
+      admin_level: data.adminLevel,
+      permissions: data.permissions || {},
+    };
+
+    const response = await api.post('/admin/admins/register/', payload);
+    return response.data;
+  },
+
+  getAdmins: async () => {
+    const response = await api.get('/admin/admins/');
+    return response.data;
+  },
+
+  getAdmin: async (adminId: number) => {
+    const response = await api.get(`/admin/admins/${adminId}/`);
+    return response.data;
+  },
+
+  updateAdmin: async (adminId: number, data: Partial<AdminRegistrationData>) => {
+    const payload = {
+      first_name: data.firstName,
+      last_name: data.lastName,
+      email: data.email,
+      phone_number: data.phoneNumber,
+      admin_level: data.adminLevel,
+      permissions: data.permissions,
+      is_active: data.isActive,
+    };
+
+    const response = await api.put(`/admin/admins/${adminId}/`, payload);
+    return response.data;
+  },
+
+  deleteAdmin: async (adminId: number) => {
+    const response = await api.delete(`/admin/admins/${adminId}/`);
+    return response.data;
+  },
+
+  resetAdminPassword: async (adminId: number, newPassword: string, confirmPassword: string) => {
+    const response = await api.post(`/admin/admins/${adminId}/reset-password/`, {
+      new_password: newPassword,
+      confirm_password: confirmPassword,
+    });
+    return response.data;
+  },
+
+  // Teacher management
+  createTeacher: async (data: TeacherRegistrationData): Promise<TeacherResponse> => {
+    const payload = {
+      first_name: data.firstName,
+      last_name: data.lastName,
+      email: data.email,
+      phone_number: data.phoneNumber,
+      password: data.password,
+      confirm_password: data.confirmPassword,
+      subjects: data.subjects,
+      employee_id: data.employeeId,
+      qualification: data.qualification,
+      experience_years: data.experienceYears,
+      hire_date: data.hireDate,
+    };
+
+    const response = await api.post('/admin/teachers/register/', payload);
+    return response.data;
+  },
+
+  getTeachers: async () => {
+    const response = await api.get('/admin/teachers/');
+    return response.data;
+  },
+
+  getTeacher: async (teacherId: number) => {
+    const response = await api.get(`/admin/teachers/${teacherId}/`);
+    return response.data;
+  },
+
+  updateTeacher: async (teacherId: number, data: Partial<TeacherRegistrationData>) => {
+    const payload = {
+      first_name: data.firstName,
+      last_name: data.lastName,
+      email: data.email,
+      phone_number: data.phoneNumber,
+      subjects: data.subjects,
+      employee_id: data.employeeId,
+      qualification: data.qualification,
+      experience_years: data.experienceYears,
+      hire_date: data.hireDate,
+      is_active: data.isActive,
+    };
+
+    const response = await api.put(`/admin/teachers/${teacherId}/`, payload);
+    return response.data;
+  },
+
+  deleteTeacher: async (teacherId: number) => {
+    const response = await api.delete(`/admin/teachers/${teacherId}/`);
+    return response.data;
+  },
+
+  resetTeacherPassword: async (teacherId: number, newPassword: string, confirmPassword: string) => {
+    const response = await api.post(`/admin/teachers/${teacherId}/reset-password/`, {
+      new_password: newPassword,
+      confirm_password: confirmPassword,
+    });
+    return response.data;
+  },
+};
+
+// User profile API functions (Self-service for all user types)
+export const userApi = {
+  getProfile: async () => {
+    const response = await api.get('/auth/profile/');
+    return response.data;
+  },
+
+  updateProfile: async (data: any) => {
+    const response = await api.put('/auth/profile/update/', data);
     return response.data;
   },
 };

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { loginUser } from '../services/api';
 import type { LoginData, LoginResponse } from '../types/auth';
@@ -195,20 +195,20 @@ const LoginPage: React.FC = () => {
           {/* Links */}
           <div className="mt-6 text-center space-y-2">
             <p className="text-sm text-gray-600">
+              <button
+                onClick={() => navigate('/forgot-password')}
+                className="text-blue-600 font-medium hover:underline"
+              >
+                Forgot your password?
+              </button>
+            </p>
+            <p className="text-sm text-gray-600">
               Don't have an account?{' '}
               <button
                 onClick={() => navigate('/register')}
                 className="text-brand-green font-medium hover:underline"
               >
                 Sign up here
-              </button>
-            </p>
-            <p className="text-sm">
-              <button
-                onClick={() => navigate('/forgot-password')}
-                className="text-brand-gold font-medium hover:underline"
-              >
-                Forgot your password?
               </button>
             </p>
           </div>

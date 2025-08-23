@@ -43,6 +43,29 @@ export interface TeacherPasswordChangeData {
   confirm_password: string;
 }
 
+export interface AdminPasswordChangeData {
+  current_password: string;
+  new_password: string;
+  confirm_password: string;
+}
+
+export interface PasswordResetRequestData {
+  email: string;
+}
+
+export interface PasswordResetConfirmData {
+  token: string;
+  new_password: string;
+  confirm_password: string;
+}
+
+export interface TokenValidationResponse {
+  valid: boolean;
+  email?: string;
+  user_type?: 'parent' | 'teacher' | 'admin';
+  error?: string;
+}
+
 export interface User {
   id: number;
   email: string;
@@ -55,6 +78,10 @@ export interface User {
   is_active: boolean;
   date_joined?: string;
   teacher_profile?: TeacherProfile;
+  admin_profile?: AdminProfile;
+  is_staff?: boolean;
+  is_superuser?: boolean;
+  must_change_password?: boolean;
 }
 
 export interface LoginResponse {
@@ -68,4 +95,60 @@ export interface LoginError {
   user_type_mismatch?: boolean;
   actual_user_type?: 'parent' | 'teacher' | 'admin';
   expected_user_type?: 'parent' | 'teacher';
+}
+
+// Admin types
+export interface AdminProfile {
+  admin_level: 'super_admin' | 'admin' | 'moderator';
+  permissions: Record<string, any>;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface AdminRegistrationData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber: string;
+  password: string;
+  confirmPassword: string;
+  adminLevel: 'super_admin' | 'admin' | 'moderator';
+  permissions?: Record<string, any>;
+  isActive?: boolean;
+}
+
+export interface AdminUser extends User {
+  admin_profile?: AdminProfile;
+  is_staff: boolean;
+  is_superuser: boolean;
+}
+
+export interface AdminResponse {
+  message: string;
+  admin: AdminUser;
+}
+
+// Teacher types
+export interface TeacherRegistrationData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber: string;
+  password: string;
+  confirmPassword: string;
+  subjects: string;
+  employeeId?: string;
+  qualification?: string;
+  experienceYears: number;
+  hireDate?: string;
+  isActive?: boolean;
+}
+
+export interface TeacherUser extends User {
+  teacher_profile?: TeacherProfile;
+}
+
+export interface TeacherResponse {
+  message: string;
+  teacher: TeacherUser;
 }

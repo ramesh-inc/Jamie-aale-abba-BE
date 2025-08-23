@@ -4,8 +4,9 @@ from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
-from core.models import User, Parent, Teacher
+from core.models import User, Parent, Teacher, Admin
 from django.utils import timezone
+import uuid
 
 
 # Parent Registration Serializer
@@ -134,13 +135,15 @@ class ResendVerificationSerializer(serializers.Serializer):
 class UserProfileSerializer(serializers.ModelSerializer):
     full_name = serializers.SerializerMethodField()
     teacher_profile = serializers.SerializerMethodField()
+    admin_profile = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         fields = [
             'id', 'email', 'first_name', 'last_name', 'full_name',
             'phone_number', 'user_type', 'is_email_verified', 'is_active',
-            'teacher_profile'
+            'teacher_profile', 'admin_profile', 'is_staff', 'is_superuser',
+            'must_change_password'
         ]
 
     def get_full_name(self, obj):
@@ -157,6 +160,16 @@ class UserProfileSerializer(serializers.ModelSerializer):
                 'is_active': obj.teacher_profile.is_active,
                 'password_change_required': obj.teacher_profile.password_change_required,
                 'created_at': obj.teacher_profile.created_at,
+            }
+        return None
+
+    def get_admin_profile(self, obj):
+        if obj.user_type == 'admin' and hasattr(obj, 'admin_profile'):
+            return {
+                'admin_level': obj.admin_profile.admin_level,
+                'permissions': obj.admin_profile.permissions,
+                'is_active': obj.admin_profile.is_active,
+                'created_at': obj.admin_profile.created_at,
             }
         return None
 
@@ -364,3 +377,232 @@ class TeacherDetailSerializer(serializers.ModelSerializer):
                 'created_at': obj.teacher_profile.created_at,
             }
         return None
+
+
+# Admin Registration Serializer (Super Admin Only)
+class AdminRegistrationSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, min_length=8)
+    confirm_password = serializers.CharField(write_only=True)
+    admin_level = serializers.ChoiceField(choices=Admin.ADMIN_LEVELS, default='admin')
+    permissions = serializers.JSONField(required=False, default=dict, help_text="Custom permissions as JSON object")
+
+    class Meta:
+        model = User
+        fields = [
+            'first_name', 'last_name', 'email', 'phone_number', 'password', 
+            'confirm_password', 'admin_level', 'permissions'
+        ]
+
+    def validate_email(self, value):
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("A user with this email already exists.")
+        return value.lower()
+
+    def validate(self, attrs):
+        if attrs['password'] != attrs['confirm_password']:
+            raise serializers.ValidationError({"confirm_password": "Passwords do not match."})
+        
+        # Validate password strength
+        try:
+            validate_password(attrs['password'])
+        except DjangoValidationError as e:
+            raise serializers.ValidationError({"password": e.messages})
+        
+        return attrs
+
+    def create(self, validated_data):
+        # Extract admin-specific fields
+        admin_level = validated_data.pop('admin_level', 'admin')
+        permissions = validated_data.pop('permissions', {})
+        validated_data.pop('confirm_password')
+        
+        with transaction.atomic():
+            # Create admin user (active by default - no email verification needed)
+            user = User.objects.create_user(
+                username=validated_data['email'],
+                email=validated_data['email'],
+                first_name=validated_data['first_name'],
+                last_name=validated_data['last_name'],
+                phone_number=validated_data.get('phone_number', ''),
+                password=validated_data['password'],
+                user_type='admin',
+                is_active=True,
+                is_email_verified=True,
+                is_staff=True,  # Admins are staff by default
+                must_change_password=True  # Force password change on first login
+            )
+            
+            # Admin profile is automatically created by signals.py
+            # Update the admin profile with custom values
+            admin_profile = Admin.objects.get(user=user)
+            admin_profile.admin_level = admin_level
+            admin_profile.permissions = permissions
+            admin_profile.save()
+            
+            return user
+
+
+# Admin Update Serializer (Super Admin Only)
+class AdminUpdateSerializer(serializers.ModelSerializer):
+    admin_level = serializers.ChoiceField(choices=Admin.ADMIN_LEVELS)
+    permissions = serializers.JSONField(required=False, help_text="Custom permissions as JSON object")
+    is_active = serializers.BooleanField(default=True, help_text="Admin account status")
+
+    class Meta:
+        model = User
+        fields = [
+            'first_name', 'last_name', 'email', 'phone_number', 
+            'admin_level', 'permissions', 'is_active'
+        ]
+
+    def validate_email(self, value):
+        # Check if email is being changed
+        if self.instance and self.instance.email != value.lower():
+            if User.objects.filter(email=value.lower()).exists():
+                raise serializers.ValidationError("A user with this email already exists.")
+        return value.lower()
+
+    def update(self, instance, validated_data):
+        # Extract admin-specific fields
+        admin_level = validated_data.pop('admin_level', None)
+        permissions = validated_data.pop('permissions', None)
+        
+        with transaction.atomic():
+            # Update user fields
+            for attr, value in validated_data.items():
+                setattr(instance, attr, value)
+            
+            instance.save()
+            
+            # Update admin profile
+            if hasattr(instance, 'admin_profile'):
+                admin_profile = instance.admin_profile
+                if admin_level is not None:
+                    admin_profile.admin_level = admin_level
+                if permissions is not None:
+                    admin_profile.permissions = permissions
+                admin_profile.save()
+            
+            return instance
+
+
+# Admin Detail Serializer (for listing and details)
+class AdminDetailSerializer(serializers.ModelSerializer):
+    full_name = serializers.SerializerMethodField()
+    admin_profile = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = [
+            'id', 'email', 'first_name', 'last_name', 'full_name',
+            'phone_number', 'user_type', 'is_email_verified', 'is_active',
+            'admin_profile', 'date_joined', 'is_staff', 'is_superuser'
+        ]
+
+    def get_full_name(self, obj):
+        return f"{obj.first_name} {obj.last_name}".strip()
+
+    def get_admin_profile(self, obj):
+        if hasattr(obj, 'admin_profile'):
+            return {
+                'admin_level': obj.admin_profile.admin_level,
+                'permissions': obj.admin_profile.permissions,
+                'is_active': obj.admin_profile.is_active,
+                'created_at': obj.admin_profile.created_at,
+            }
+        return None
+
+
+# Parent Update Serializer (Parent self-service)
+class ParentUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = [
+            'first_name', 'last_name', 'phone_number'
+        ]
+
+    def update(self, instance, validated_data):
+        with transaction.atomic():
+            # Update user fields
+            for attr, value in validated_data.items():
+                setattr(instance, attr, value)
+            
+            instance.save()
+            return instance
+
+
+# Password Change Serializers
+class ParentPasswordChangeSerializer(serializers.Serializer):
+    current_password = serializers.CharField(write_only=True)
+    new_password = serializers.CharField(write_only=True, min_length=8)
+    confirm_password = serializers.CharField(write_only=True)
+
+    def validate(self, attrs):
+        if attrs['new_password'] != attrs['confirm_password']:
+            raise serializers.ValidationError("New passwords do not match.")
+        return attrs
+
+
+# Self-Service Profile Update Serializers
+class TeacherSelfUpdateSerializer(serializers.ModelSerializer):
+    subjects = serializers.CharField(max_length=255, help_text="Subject(s) or specialization", required=False)
+    qualification = serializers.CharField(max_length=500, required=False)
+
+    class Meta:
+        model = User
+        fields = [
+            'first_name', 'last_name', 'phone_number', 
+            'subjects', 'qualification'
+        ]
+
+    def update(self, instance, validated_data):
+        # Extract teacher-specific fields
+        subjects = validated_data.pop('subjects', None)
+        qualification = validated_data.pop('qualification', None)
+        
+        with transaction.atomic():
+            # Update user fields
+            for attr, value in validated_data.items():
+                setattr(instance, attr, value)
+            
+            instance.save()
+            
+            # Update teacher profile
+            if hasattr(instance, 'teacher_profile'):
+                teacher_profile = instance.teacher_profile
+                if subjects is not None:
+                    teacher_profile.subjects = subjects
+                if qualification is not None:
+                    teacher_profile.qualification = qualification
+                teacher_profile.save()
+            
+            return instance
+
+
+class AdminSelfUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = [
+            'first_name', 'last_name', 'phone_number'
+        ]
+
+    def update(self, instance, validated_data):
+        with transaction.atomic():
+            # Update user fields
+            for attr, value in validated_data.items():
+                setattr(instance, attr, value)
+            
+            instance.save()
+            return instance
+
+
+# Password Change Serializers
+class ParentPasswordChangeSerializer(serializers.Serializer):
+    current_password = serializers.CharField(write_only=True)
+    new_password = serializers.CharField(write_only=True, min_length=8)
+    confirm_password = serializers.CharField(write_only=True)
+
+    def validate(self, attrs):
+        if attrs['new_password'] != attrs['confirm_password']:
+            raise serializers.ValidationError("New passwords do not match.")
+        return attrs

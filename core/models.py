@@ -50,6 +50,11 @@ class User(AbstractUser):
     email_verification_token = models.UUIDField(default=uuid.uuid4, null=True, blank=True)
     email_verification_sent_at = models.DateTimeField(null=True, blank=True)
     
+    # Password management
+    must_change_password = models.BooleanField(default=False, help_text="True if user must change password on next login")
+    password_reset_token = models.UUIDField(default=uuid.uuid4, null=True, blank=True)
+    password_reset_sent_at = models.DateTimeField(null=True, blank=True)
+    
     # Override is_active to require email verification for parents
     # Teachers and admins are active by default
     

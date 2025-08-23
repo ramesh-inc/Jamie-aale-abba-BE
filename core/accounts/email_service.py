@@ -63,3 +63,43 @@ ClassDojo Team
     except Exception as e:
         logger.error(f"Failed to send welcome email to {user.email}: {str(e)}")
         return False
+
+
+def send_password_reset_email(user):
+    """Send password reset email to user"""
+    try:
+        # Use the configured frontend URL from settings
+        frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:5174')
+        reset_url = f"{frontend_url}/reset-password/{user.password_reset_token}"
+        
+        message = f"""
+Hi {user.first_name},
+
+We received a request to reset your password for your ClassDojo account.
+
+Please click the link below to reset your password:
+
+{reset_url}
+
+This link will expire in 1 hour for security reasons.
+
+If you didn't request a password reset, you can safely ignore this email.
+
+Thanks,
+ClassDojo Team
+        """.strip()
+        
+        send_mail(
+            subject='Reset Your ClassDojo Password',
+            message=message,
+            from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@classdojo.com'),
+            recipient_list=[user.email],
+            fail_silently=False,
+        )
+        
+        logger.info(f"Password reset email sent to {user.email}")
+        return True
+        
+    except Exception as e:
+        logger.error(f"Failed to send password reset email to {user.email}: {str(e)}")
+        return False
