@@ -30,7 +30,47 @@ Administrative endpoints (requires admin/super admin privileges):
 - Create, list, get, update, delete admins
 - Reset admin passwords
 
-### 4. **Jamie_Aale_Abba_Environment.postman_environment.json**
+### 4. **Jamie_Aale_Abba_Class_Management_API.postman_collection.json**
+Class management and student assignment endpoints (admin access only):
+
+**Class Management:**
+- Create, list, view, update, and deactivate nursery classes
+- Search and filter classes by various criteria
+
+**Student Management:**
+- Create, list, view, update, and deactivate student records
+- Search students and filter by class or enrollment status
+
+**Teacher-Student Assignments:**
+- View all teachers with their class assignments and student counts
+- Bulk assign multiple students to teachers and classes
+- Reassign students between classes
+- Individual assignment and removal operations
+- Manage teacher-class relationships with roles
+
+**Dashboard Statistics:**
+- Comprehensive statistics for admin dashboard
+- Class utilization metrics and capacity tracking
+
+### 5. **Jamie_Aale_Abba_Parent_Child_Management_API.postman_collection.json**
+Parent child management endpoints (parent access only):
+
+**Child Management:**
+- View all children linked to parent account
+- Add new child with comprehensive validation
+- View detailed child information including class enrollment
+- Update child information and relationship details
+- Remove child from parent account (relationship management)
+
+**Class Information:**
+- View available classes for enrollment
+- Request class enrollment for children (subject to admin approval)
+
+**Dashboard & Summary:**
+- Get summary statistics of children for parent dashboard
+- Enrollment status and class distribution overview
+
+### 6. **Jamie_Aale_Abba_Environment.postman_environment.json**
 Pre-configured environment variables:
 - `base_url`: API base URL (default: http://localhost:8000/api/v1)
 - `access_token`: JWT access token (auto-populated after login)
@@ -144,6 +184,55 @@ Forgot Password → Check Email → Validate Reset Token → Reset Password
         "can_manage_students": true,
         "can_view_reports": true
     }
+}
+```
+
+### Class Creation (Admin only)
+```json
+{
+    "class_name": "Nursery 1",
+    "class_code": "N1-2024",
+    "age_group": "2-3 years",
+    "capacity": 15,
+    "room_number": "Room 101",
+    "academic_year": "2024-2025",
+    "is_active": true
+}
+```
+
+### Student Creation (Admin only)
+```json
+{
+    "student_name": "Emma Johnson",
+    "student_id": "STU001",
+    "date_of_birth": "2021-03-15",
+    "gender": "female",
+    "medical_conditions": "No known allergies",
+    "is_active": true
+}
+```
+
+### Bulk Student Assignment (Admin only)
+```json
+{
+    "teacher_id": 1,
+    "class_id": 1,
+    "student_ids": [1, 2, 3],
+    "role": "primary"
+}
+```
+
+### Child Addition (Parent only)
+```json
+{
+    "student_name": "Emma Johnson",
+    "date_of_birth": "2021-03-15",
+    "gender": "female",
+    "avatar_url": "https://example.com/avatar.jpg",
+    "medical_conditions": "No known allergies",
+    "relationship_type": "mother",
+    "is_primary_contact": true,
+    "pickup_authorized": true
 }
 ```
 

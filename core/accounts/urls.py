@@ -20,6 +20,34 @@ from .views import (
     UserProfileView,
     ParentPasswordChangeView,
 )
+from .class_management_views import (
+    ClassListCreateView,
+    ClassDetailView,
+    StudentListCreateView,
+    StudentDetailView,
+    TeacherStudentAssignmentView,
+    assign_students_to_teacher,
+    reassign_students,
+    remove_student_assignment,
+    assign_teacher_to_class,
+    remove_teacher_from_class,
+    dashboard_statistics,
+)
+from .teacher_views import (
+    get_teacher_classes,
+    get_class_students,
+    mark_attendance,
+    get_attendance,
+)
+from .parent_child_views import (
+    ParentChildrenListView,
+    AddChildView,
+    ChildDetailView,
+    get_available_classes,
+    get_child_summary,
+    remove_child_relationship,
+    request_class_enrollment,
+)
 from .admin_password_change import AdminFirstTimePasswordChangeView
 from .password_reset_views import PasswordResetRequestView, PasswordResetConfirmView, validate_reset_token
 
@@ -39,6 +67,14 @@ urlpatterns = [
     
     # Teacher self-service endpoints
     path('auth/teacher/change-password/', TeacherPasswordChangeView.as_view(), name='teacher_change_password'),
+    
+    # Teacher class management endpoints (for /api/v1/teacher/)
+    path('teacher/my-classes/', get_teacher_classes, name='get_teacher_classes'),
+    path('teacher/classes/<int:class_id>/students/', get_class_students, name='get_class_students'),
+    
+    # Teacher attendance endpoints (for /api/v1/teacher/)
+    path('teacher/attendance/mark/', mark_attendance, name='teacher_attendance_mark'),
+    path('teacher/attendance/', get_attendance, name='teacher_attendance_get'),
     
     # Admin self-service endpoints
     path('auth/admin/change-password/', AdminFirstTimePasswordChangeView.as_view(), name='admin_change_password'),
@@ -74,4 +110,30 @@ urlpatterns = [
     path('resend-verification/', ResendVerificationView.as_view(), name='resend_verification'),
     path('login/', LoginView.as_view(), name='token_obtain_pair'),
     path('refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    
+    # Class Management endpoints (Admin only - for /api/v1/admin/)
+    path('admin/classes/', ClassListCreateView.as_view(), name='admin_class_list'),
+    path('admin/classes/<int:pk>/', ClassDetailView.as_view(), name='admin_class_detail'),
+    path('admin/students/', StudentListCreateView.as_view(), name='admin_student_list'),
+    path('admin/students/<int:pk>/', StudentDetailView.as_view(), name='admin_student_detail'),
+    
+    # Teacher-Student Assignment endpoints (Admin only)
+    path('admin/teacher-assignments/', TeacherStudentAssignmentView.as_view(), name='admin_teacher_assignments'),
+    path('admin/assign-students/', assign_students_to_teacher, name='admin_assign_students'),
+    path('admin/reassign-students/', reassign_students, name='admin_reassign_students'),
+    path('admin/remove-student-assignment/<int:student_id>/', remove_student_assignment, name='admin_remove_student'),
+    path('admin/assign-teacher-to-class/', assign_teacher_to_class, name='admin_assign_teacher_class'),
+    path('admin/remove-teacher-from-class/<int:teacher_id>/<int:class_id>/', remove_teacher_from_class, name='admin_remove_teacher_class'),
+    
+    # Dashboard statistics (Admin only)
+    path('admin/dashboard-stats/', dashboard_statistics, name='admin_dashboard_stats'),
+    
+    # Parent Child Management endpoints (Parent only - for /api/v1/parent/)
+    path('parent/children/', ParentChildrenListView.as_view(), name='parent_children_list'),
+    path('parent/children/add/', AddChildView.as_view(), name='parent_add_child'),
+    path('parent/children/<int:pk>/', ChildDetailView.as_view(), name='parent_child_detail'),
+    path('parent/children/<int:child_id>/remove/', remove_child_relationship, name='parent_remove_child'),
+    path('parent/children/<int:child_id>/request-enrollment/', request_class_enrollment, name='parent_request_enrollment'),
+    path('parent/children/summary/', get_child_summary, name='parent_child_summary'),
+    path('parent/available-classes/', get_available_classes, name='parent_available_classes'),
 ]

@@ -7,10 +7,325 @@ import DashboardLayout from '../components/layout/DashboardLayout';
 import ProgressChart from '../components/dashboard/ProgressChart';
 import ActivityTimeline from '../components/dashboard/ActivityTimeline';
 import AdminSettings from '../components/settings/AdminSettings';
+import ClassManagement from '../components/admin/ClassManagement';
 import { adminApi } from '../services/api';
 import type { AdminUser, TeacherUser } from '../types/auth';
 
-type TabType = 'home' | 'messages' | 'student-account' | 'reports' | 'create-admin' | 'create-teacher' | 'manage-admins' | 'manage-teachers' | 'settings';
+type TabType = 'home' | 'messages' | 'student-account' | 'reports' | 'create-admin' | 'create-teacher' | 'manage-admins' | 'manage-teachers' | 'settings' | 'class-management';
+
+interface ConfirmationModalProps {
+  message: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+}
+
+const ConfirmationModal: React.FC<ConfirmationModalProps> = ({ message, onConfirm, onCancel }) => {
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 w-full max-w-md">
+        <div className="flex items-center mb-4">
+          <div className="flex-shrink-0 w-10 h-10 mx-auto">
+            <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+              <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.268 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div className="text-center">
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Confirm Action</h3>
+          <p className="text-sm text-gray-500 mb-6">{message}</p>
+          <div className="flex space-x-3">
+            <button
+              onClick={onCancel}
+              className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={onConfirm}
+              className="flex-1 px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+interface NotificationModalProps {
+  message: string;
+  type: 'success' | 'error';
+  onClose: () => void;
+}
+
+const NotificationModal: React.FC<NotificationModalProps> = ({ message, type, onClose }) => {
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 w-full max-w-md">
+        <div className="flex items-center mb-4">
+          {type === 'success' ? (
+            <div className="flex-shrink-0 w-10 h-10 mx-auto">
+              <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+            </div>
+          ) : (
+            <div className="flex-shrink-0 w-10 h-10 mx-auto">
+              <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </div>
+            </div>
+          )}
+        </div>
+        <div className="text-center">
+          <h3 className={`text-lg font-medium ${type === 'success' ? 'text-green-900' : 'text-red-900'} mb-2`}>
+            {type === 'success' ? 'Success' : 'Error'}
+          </h3>
+          <p className="text-sm text-gray-500 mb-6">{message}</p>
+          <button
+            onClick={onClose}
+            className={`w-full px-4 py-2 text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+              type === 'success'
+                ? 'bg-green-600 text-white hover:bg-green-700 focus:ring-green-500'
+                : 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500'
+            }`}
+          >
+            OK
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+interface EditTeacherModalProps {
+  teacher: TeacherUser;
+  onSave: (updatedTeacher: TeacherUser) => void;
+  onCancel: () => void;
+}
+
+const EditTeacherModal: React.FC<EditTeacherModalProps> = ({ teacher, onSave, onCancel }) => {
+  const [formData, setFormData] = useState({
+    first_name: teacher.first_name,
+    last_name: teacher.last_name,
+    email: teacher.email,
+    phone_number: teacher.phone_number || '',
+    employee_id: teacher.teacher_profile?.employee_id || '',
+    subjects: teacher.teacher_profile?.subjects || '',
+    qualification: teacher.teacher_profile?.qualification || '',
+    experience_years: teacher.teacher_profile?.experience_years || 0,
+    hire_date: teacher.teacher_profile?.hire_date || '',
+    is_active: teacher.is_active
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    const updatedTeacher: TeacherUser = {
+      ...teacher,
+      first_name: formData.first_name,
+      last_name: formData.last_name,
+      full_name: `${formData.first_name} ${formData.last_name}`,
+      email: formData.email,
+      phone_number: formData.phone_number,
+      is_active: formData.is_active,
+      teacher_profile: {
+        ...teacher.teacher_profile!,
+        employee_id: formData.employee_id,
+        subjects: formData.subjects,
+        qualification: formData.qualification,
+        experience_years: formData.experience_years,
+        hire_date: formData.hire_date,
+      }
+    };
+    
+    onSave(updatedTeacher);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-semibold text-gray-900">Edit Teacher</h2>
+          <button
+            onClick={onCancel}
+            className="text-gray-400 hover:text-gray-600"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="first_name" className="block text-sm font-medium text-gray-700">
+                First Name
+              </label>
+              <input
+                type="text"
+                id="first_name"
+                value={formData.first_name}
+                onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                required
+              />
+            </div>
+
+            <div>
+              <label htmlFor="last_name" className="block text-sm font-medium text-gray-700">
+                Last Name
+              </label>
+              <input
+                type="text"
+                id="last_name"
+                value={formData.last_name}
+                onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                required
+              />
+            </div>
+
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                Email
+              </label>
+              <input
+                type="email"
+                id="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                required
+              />
+            </div>
+
+            <div>
+              <label htmlFor="phone_number" className="block text-sm font-medium text-gray-700">
+                Phone Number
+              </label>
+              <input
+                type="tel"
+                id="phone_number"
+                value={formData.phone_number}
+                onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="employee_id" className="block text-sm font-medium text-gray-700">
+                Employee ID
+              </label>
+              <input
+                type="text"
+                id="employee_id"
+                value={formData.employee_id}
+                onChange={(e) => setFormData({ ...formData, employee_id: e.target.value })}
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                required
+              />
+            </div>
+
+            <div>
+              <label htmlFor="experience_years" className="block text-sm font-medium text-gray-700">
+                Experience (Years)
+              </label>
+              <input
+                type="number"
+                id="experience_years"
+                value={formData.experience_years}
+                onChange={(e) => setFormData({ ...formData, experience_years: parseInt(e.target.value) || 0 })}
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                min="0"
+                required
+              />
+            </div>
+          </div>
+
+          <div>
+            <label htmlFor="subjects" className="block text-sm font-medium text-gray-700">
+              Subjects
+            </label>
+            <input
+              type="text"
+              id="subjects"
+              value={formData.subjects}
+              onChange={(e) => setFormData({ ...formData, subjects: e.target.value })}
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              placeholder="e.g., Mathematics, Physics, Chemistry"
+              required
+            />
+          </div>
+
+          <div>
+            <label htmlFor="qualification" className="block text-sm font-medium text-gray-700">
+              Qualification
+            </label>
+            <input
+              type="text"
+              id="qualification"
+              value={formData.qualification}
+              onChange={(e) => setFormData({ ...formData, qualification: e.target.value })}
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              placeholder="e.g., Master of Science in Mathematics"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="hire_date" className="block text-sm font-medium text-gray-700">
+              Hire Date
+            </label>
+            <input
+              type="date"
+              id="hire_date"
+              value={formData.hire_date}
+              onChange={(e) => setFormData({ ...formData, hire_date: e.target.value })}
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="is_active"
+              checked={formData.is_active}
+              onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            />
+            <label htmlFor="is_active" className="ml-2 block text-sm text-gray-900">
+              Active Account
+            </label>
+          </div>
+
+          <div className="flex justify-end space-x-3 pt-4">
+            <button
+              type="button"
+              onClick={onCancel}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              Save Changes
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
 
 export default function AdminDashboardPage() {
   const [activeTab, setActiveTab] = useState<TabType>('home');
@@ -19,6 +334,15 @@ export default function AdminDashboardPage() {
   const [teachers, setTeachers] = useState<TeacherUser[]>([]);
   const [loading, setLoading] = useState(false);
   const [showPasswordChange, setShowPasswordChange] = useState(false);
+  const [showEditTeacherModal, setShowEditTeacherModal] = useState(false);
+  const [editingTeacher, setEditingTeacher] = useState<TeacherUser | null>(null);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [confirmMessage, setConfirmMessage] = useState('');
+  const [confirmAction, setConfirmAction] = useState<(() => void) | null>(null);
+  const [notification, setNotification] = useState<{
+    message: string;
+    type: 'success' | 'error';
+  } | null>(null);
 
   const [user, setUser] = useState(() => AuthTokenManager.getUser());
   const isSuper = user?.is_superuser || user?.admin_profile?.admin_level === 'super_admin';
@@ -44,10 +368,23 @@ export default function AdminDashboardPage() {
       ]);
 
       setAdmins(adminResponse.admins);
-      setTeachers(teacherResponse.teachers);
+      
+      // Filter teachers for Manage Teachers section:
+      // - Show if teacher_profile.is_active is true (regardless of user is_active)
+      // - Hide if teacher_profile.is_active is false (completely deleted)
+      const visibleTeachers = teacherResponse.teachers.filter(teacher => 
+        teacher.teacher_profile?.is_active !== false
+      );
+      setTeachers(visibleTeachers);
+      
+      // Count only fully active teachers for stats (both user and profile active)
+      const activeTeachersCount = teacherResponse.teachers.filter(teacher => 
+        teacher.is_active && teacher.teacher_profile?.is_active
+      ).length;
+      
       setAdminStats({
         admins: adminResponse.count,
-        teachers: teacherResponse.count,
+        teachers: activeTeachersCount,
       });
     } catch (error) {
       console.error('Failed to load stats:', error);
@@ -75,6 +412,81 @@ export default function AdminDashboardPage() {
       const updatedUser = { ...user, must_change_password: false };
       AuthTokenManager.setUser(updatedUser);
       setUser(updatedUser);
+    }
+  };
+
+  const handleEditTeacher = (teacherId: number) => {
+    const teacher = teachers.find(t => t.id === teacherId);
+    if (teacher) {
+      setEditingTeacher(teacher);
+      setShowEditTeacherModal(true);
+    }
+  };
+
+  const handleDeleteTeacher = (teacherId: number) => {
+    const teacher = teachers.find(t => t.id === teacherId);
+    const teacherName = teacher ? teacher.full_name : 'this teacher';
+    
+    setConfirmMessage(`Are you sure you want to delete "${teacherName}"? This will deactivate their account and they will no longer be able to access the system.`);
+    setConfirmAction(() => async () => {
+      try {
+        await adminApi.deleteTeacher(teacherId);
+        loadStats(); // Refresh the data
+        showNotification(`Teacher "${teacherName}" has been successfully deleted.`, 'success');
+        
+        // Force a page refresh to ensure all components get updated data
+        // This ensures that any cached teacher data in other components is refreshed
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000); // Give time for the success message to be seen
+      } catch (error) {
+        console.error('Error deleting teacher:', error);
+        showNotification('Failed to delete teacher. Please try again.', 'error');
+      }
+    });
+    setShowConfirmModal(true);
+  };
+
+  const handleUpdateTeacher = async (updatedTeacher: TeacherUser) => {
+    try {
+      await adminApi.updateTeacher(updatedTeacher.id, {
+        firstName: updatedTeacher.first_name,
+        lastName: updatedTeacher.last_name,
+        email: updatedTeacher.email,
+        phoneNumber: updatedTeacher.phone_number,
+        subjects: updatedTeacher.teacher_profile?.subjects,
+        employeeId: updatedTeacher.teacher_profile?.employee_id,
+        qualification: updatedTeacher.teacher_profile?.qualification,
+        experienceYears: updatedTeacher.teacher_profile?.experience_years,
+        hireDate: updatedTeacher.teacher_profile?.hire_date,
+        isActive: updatedTeacher.is_active,
+      });
+      loadStats(); // Refresh the data
+      setShowEditTeacherModal(false);
+      setEditingTeacher(null);
+      showNotification(`Teacher "${updatedTeacher.full_name}" has been successfully updated.`, 'success');
+      
+      // If teacher status was changed, refresh page to update all components
+      if (updatedTeacher.is_active !== teachers.find(t => t.id === updatedTeacher.id)?.is_active) {
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
+      }
+    } catch (error) {
+      console.error('Error updating teacher:', error);
+      showNotification('Failed to update teacher. Please try again.', 'error');
+    }
+  };
+
+  const showNotification = (message: string, type: 'success' | 'error') => {
+    setNotification({ message, type });
+  };
+
+  const handleConfirmAction = () => {
+    if (confirmAction) {
+      confirmAction();
+      setShowConfirmModal(false);
+      setConfirmAction(null);
     }
   };
 
@@ -164,6 +576,8 @@ export default function AdminDashboardPage() {
 
       case 'settings':
         return <AdminSettings />;
+      case 'class-management':
+        return <ClassManagement />;
 
       case 'create-admin':
         return (isSuper || isAdmin) ? (
@@ -265,6 +679,9 @@ export default function AdminDashboardPage() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Status
                     </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -290,10 +707,31 @@ export default function AdminDashboardPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          teacher.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          (teacher.is_active && teacher.teacher_profile?.is_active) 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-red-100 text-red-800'
                         }`}>
-                          {teacher.is_active ? 'Active' : 'Inactive'}
+                          {(teacher.is_active && teacher.teacher_profile?.is_active) ? 'Active' : 'Inactive'}
                         </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <button 
+                          onClick={() => handleEditTeacher(teacher.id)}
+                          className="text-blue-600 hover:text-blue-900 mr-3"
+                        >
+                          Edit
+                        </button>
+                        <button 
+                          onClick={() => handleDeleteTeacher(teacher.id)}
+                          className={`${
+                            (teacher.is_active && teacher.teacher_profile?.is_active)
+                              ? 'text-red-600 hover:text-red-900' 
+                              : 'text-gray-400 cursor-not-allowed'
+                          }`}
+                          disabled={!(teacher.is_active && teacher.teacher_profile?.is_active)}
+                        >
+                          Delete
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -319,6 +757,7 @@ export default function AdminDashboardPage() {
       case 'manage-admins': return 'Manage Administrators';
       case 'manage-teachers': return 'Manage Teachers';
       case 'settings': return 'Settings';
+      case 'class-management': return 'Class Management';
       default: return 'Dashboard';
     }
   };
@@ -330,6 +769,7 @@ export default function AdminDashboardPage() {
       case 'create-teacher': return 'Create new teacher accounts and assign permissions';
       case 'manage-admins': return 'View and manage existing administrator accounts';
       case 'manage-teachers': return 'View and manage existing teacher accounts';
+      case 'class-management': return 'Manage nursery classes, students, and teacher assignments';
       default: return undefined;
     }
   };
@@ -353,6 +793,39 @@ export default function AdminDashboardPage() {
       {showPasswordChange && (
         <AdminFirstTimePasswordChange
           onSuccess={handlePasswordChangeSuccess}
+        />
+      )}
+      
+      {/* Edit Teacher Modal */}
+      {showEditTeacherModal && editingTeacher && (
+        <EditTeacherModal
+          teacher={editingTeacher}
+          onSave={handleUpdateTeacher}
+          onCancel={() => {
+            setShowEditTeacherModal(false);
+            setEditingTeacher(null);
+          }}
+        />
+      )}
+      
+      {/* Confirmation Modal */}
+      {showConfirmModal && (
+        <ConfirmationModal
+          message={confirmMessage}
+          onConfirm={handleConfirmAction}
+          onCancel={() => {
+            setShowConfirmModal(false);
+            setConfirmAction(null);
+          }}
+        />
+      )}
+      
+      {/* Notification Modal */}
+      {notification && (
+        <NotificationModal
+          message={notification.message}
+          type={notification.type}
+          onClose={() => setNotification(null)}
         />
       )}
     </DashboardLayout>

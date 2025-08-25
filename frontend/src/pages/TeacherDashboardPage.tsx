@@ -3,8 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../utils/auth';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import TeacherSettings from '../components/settings/TeacherSettings';
+import AttendanceMarking from '../components/teacher/AttendanceMarking';
+import AttendanceViewing from '../components/teacher/AttendanceViewing';
 
-type TabType = 'home' | 'classes' | 'students' | 'attendance' | 'activities' | 'messages' | 'reports' | 'settings';
+type TabType = 'home' | 'classes' | 'students' | 'attendance' | 'attendance-view' | 'activities' | 'messages' | 'reports' | 'settings';
 
 const TeacherDashboardPage: React.FC = () => {
   const { user } = useAuth();
@@ -90,13 +92,24 @@ const TeacherDashboardPage: React.FC = () => {
               </div>
 
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">Attendance</h3>
-                <p className="text-gray-600 mb-4">Mark and track student attendance</p>
+                <h3 className="text-lg font-semibold text-gray-800 mb-2">Mark Attendance</h3>
+                <p className="text-gray-600 mb-4">Record daily student attendance</p>
                 <button 
                   onClick={() => setActiveTab('attendance')}
                   className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 transition-colors"
                 >
-                  Take Attendance
+                  Mark Attendance
+                </button>
+              </div>
+
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h3 className="text-lg font-semibold text-gray-800 mb-2">View Attendance</h3>
+                <p className="text-gray-600 mb-4">Review attendance history and records</p>
+                <button 
+                  onClick={() => setActiveTab('attendance-view')}
+                  className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+                >
+                  View Records
                 </button>
               </div>
 
@@ -116,7 +129,7 @@ const TeacherDashboardPage: React.FC = () => {
                 <p className="text-gray-600 mb-4">Communicate with parents and staff</p>
                 <button 
                   onClick={() => setActiveTab('messages')}
-                  className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+                  className="bg-cyan-600 text-white px-4 py-2 rounded-md hover:bg-cyan-700 transition-colors"
                 >
                   View Messages
                 </button>
@@ -135,6 +148,12 @@ const TeacherDashboardPage: React.FC = () => {
             </div>
           </div>
         );
+      
+      case 'attendance':
+        return <AttendanceMarking />;
+      
+      case 'attendance-view':
+        return <AttendanceViewing />;
       
       case 'settings':
         return <TeacherSettings />;
@@ -159,7 +178,8 @@ const TeacherDashboardPage: React.FC = () => {
       case 'home': return 'Teacher Dashboard';
       case 'classes': return 'My Classes';
       case 'students': return 'Students';
-      case 'attendance': return 'Attendance';
+      case 'attendance': return 'Mark Attendance';
+      case 'attendance-view': return 'View Attendance';
       case 'activities': return 'Activities';
       case 'messages': return 'Messages';
       case 'reports': return 'Reports';
@@ -173,7 +193,8 @@ const TeacherDashboardPage: React.FC = () => {
       case 'home': return 'Welcome to your teacher dashboard';
       case 'classes': return 'Manage your assigned classes';
       case 'students': return 'View and manage student profiles';
-      case 'attendance': return 'Mark and track student attendance';
+      case 'attendance': return 'Record daily student attendance';
+      case 'attendance-view': return 'Review attendance history and records';
       case 'activities': return 'Plan and record learning activities';
       case 'messages': return 'Communicate with parents and staff';
       case 'reports': return 'Generate student and class reports';

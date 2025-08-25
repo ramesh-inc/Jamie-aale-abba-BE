@@ -23,7 +23,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('core.urls')),  # Include core app URLs
     path('api/v1/', include(('core.accounts.urls', 'accounts'), namespace='v1_auth')),  # Include accounts app URLs under v1
-    path('api/accounts/', include(('core.accounts.urls', 'accounts'), namespace='accounts_auth')),  # Include accounts app URLs
+    # path('api/accounts/', include(('core.accounts.urls', 'accounts'), namespace='accounts_auth')),  # Include accounts app URLs
     path('accounts/', include('django.contrib.auth.urls')),  # Built-in auth views
 ]
 

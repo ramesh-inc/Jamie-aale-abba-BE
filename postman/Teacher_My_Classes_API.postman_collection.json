@@ -1,0 +1,831 @@
+{
+	"info": {
+		"_postman_id": "teacher-classes-api-collection",
+		"name": "Teacher Portal API - Complete Collection",
+		"description": "Complete API collection for testing teacher endpoints including class management, student data, and attendance functionality.\n\nEndpoints included:\n- GET /teacher/my-classes/ - Get teacher's assigned classes\n- GET /teacher/classes/{class_id}/students/ - Get students in a class\n- POST /teacher/attendance/mark/ - Mark attendance for students\n- GET /teacher/attendance/ - View attendance records with filtering\n\nMake sure to set the following environment variables:\n- teacher_email: Valid teacher email\n- teacher_password: Teacher password\n- class_id: ID of a class assigned to the teacher\n- student_id_1, student_id_2: Student IDs for testing",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{teacher_access_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"exec": [
+					"// Set base URL if not already set",
+					"if (!pm.environment.get(\"base_url\")) {",
+					"    pm.environment.set(\"base_url\", \"http://localhost:8000\");",
+					"}"
+				],
+				"type": "text/javascript"
+			}
+		}
+	],
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Login as Teacher",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has access token\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('access');",
+									"    pm.environment.set('teacher_access_token', jsonData.access);",
+									"    pm.environment.set('teacher_refresh_token', jsonData.refresh);",
+									"});",
+									"",
+									"pm.test(\"User type is teacher\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.user.user_type).to.eql('teacher');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"{{teacher_email}}\",\n    \"password\": \"{{teacher_password}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/login/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"login",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Teacher Classes",
+			"item": [
+				{
+					"name": "Get Teacher Classes",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has success field\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('success');",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"});",
+									"",
+									"pm.test(\"Response has data array\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('data');",
+									"    pm.expect(jsonData.data).to.be.an('array');",
+									"});",
+									"",
+									"pm.test(\"Response has count field\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('count');",
+									"    pm.expect(jsonData.count).to.be.a('number');",
+									"});",
+									"",
+									"pm.test(\"Class data structure is correct\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.data.length > 0) {",
+									"        var classItem = jsonData.data[0];",
+									"        pm.expect(classItem).to.have.property('id');",
+									"        pm.expect(classItem).to.have.property('class_name');",
+									"        pm.expect(classItem).to.have.property('class_code');",
+									"        pm.expect(classItem).to.have.property('age_group');",
+									"        pm.expect(classItem).to.have.property('capacity');",
+									"        pm.expect(classItem).to.have.property('student_count');",
+									"        pm.expect(classItem).to.have.property('is_active');",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{teacher_access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/teacher/my-classes/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"teacher",
+								"my-classes",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Teacher Classes - Unauthorized (No Token)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});",
+									"",
+									"pm.test(\"Response contains authentication error\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('detail');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/teacher/my-classes/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"teacher",
+								"my-classes",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Teacher Classes - Forbidden (Non-teacher User)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 403\", function () {",
+									"    pm.response.to.have.status(403);",
+									"});",
+									"",
+									"pm.test(\"Response contains forbidden error\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('error');",
+									"    pm.expect(jsonData.error).to.include('Only teachers can access');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{parent_access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/teacher/my-classes/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"teacher",
+								"my-classes",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Class Students",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has success field\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('success');",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"});",
+									"",
+									"pm.test(\"Response has data array\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('data');",
+									"    pm.expect(jsonData.data).to.be.an('array');",
+									"});",
+									"",
+									"pm.test(\"Response has class_info\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('class_info');",
+									"    pm.expect(jsonData.class_info).to.have.property('class_name');",
+									"});",
+									"",
+									"pm.test(\"Student data structure is correct\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.data.length > 0) {",
+									"        var student = jsonData.data[0];",
+									"        pm.expect(student).to.have.property('id');",
+									"        pm.expect(student).to.have.property('student_name');",
+									"        pm.expect(student).to.have.property('student_id');",
+									"        pm.expect(student).to.have.property('date_of_birth');",
+									"        pm.expect(student).to.have.property('is_active');",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{teacher_access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/teacher/classes/{{class_id}}/students/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"teacher",
+								"classes",
+								"{{class_id}}",
+								"students",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Attendance Management",
+			"item": [
+				{
+					"name": "Mark Attendance",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Response has success field\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('success');",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"});",
+									"",
+									"pm.test(\"Response has message\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('message');",
+									"});",
+									"",
+									"pm.test(\"Response has attendance data\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('data');",
+									"    pm.expect(jsonData.data).to.have.property('class_id');",
+									"    pm.expect(jsonData.data).to.have.property('attendance_date');",
+									"    pm.expect(jsonData.data).to.have.property('records');",
+									"    pm.expect(jsonData.data.records).to.be.an('array');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{teacher_access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"class_id\": {{class_id}},\n    \"attendance_date\": \"{{attendance_date}}\",\n    \"attendance_records\": [\n        {\n            \"student_id\": {{student_id_1}},\n            \"status\": \"present\",\n            \"notes\": \"On time\"\n        },\n        {\n            \"student_id\": {{student_id_2}},\n            \"status\": \"late\",\n            \"notes\": \"Arrived 10 minutes late\"\n        }\n    ]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/teacher/attendance/mark/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"teacher",
+								"attendance",
+								"mark",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Mark Attendance - Duplicate Date (Should Fail)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Response contains duplicate error message\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('error');",
+									"    pm.expect(jsonData.error).to.include('already been marked');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{teacher_access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"class_id\": {{class_id}},\n    \"attendance_date\": \"{{attendance_date}}\",\n    \"attendance_records\": [\n        {\n            \"student_id\": {{student_id_1}},\n            \"status\": \"present\"\n        }\n    ]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/teacher/attendance/mark/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"teacher",
+								"attendance",
+								"mark",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Mark Attendance - Invalid Status (Should Fail)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Response contains invalid status error\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('error');",
+									"    pm.expect(jsonData.error).to.include('Invalid status');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{teacher_access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"class_id\": {{class_id}},\n    \"attendance_date\": \"2025-08-26\",\n    \"attendance_records\": [\n        {\n            \"student_id\": {{student_id_1}},\n            \"status\": \"invalid_status\"\n        }\n    ]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/teacher/attendance/mark/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"teacher",
+								"attendance",
+								"mark",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Attendance Records",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has success field\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('success');",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"});",
+									"",
+									"pm.test(\"Response has data array\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('data');",
+									"    pm.expect(jsonData.data).to.be.an('array');",
+									"});",
+									"",
+									"pm.test(\"Response has filters info\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('filters');",
+									"    pm.expect(jsonData.filters).to.have.property('class_id');",
+									"    pm.expect(jsonData.filters).to.have.property('class_name');",
+									"});",
+									"",
+									"pm.test(\"Attendance record structure is correct\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.data.length > 0) {",
+									"        var record = jsonData.data[0];",
+									"        pm.expect(record).to.have.property('id');",
+									"        pm.expect(record).to.have.property('student');",
+									"        pm.expect(record).to.have.property('attendance_date');",
+									"        pm.expect(record).to.have.property('status');",
+									"        pm.expect(record).to.have.property('marked_by');",
+									"        pm.expect(record).to.have.property('marked_at');",
+									"        pm.expect(record.student).to.have.property('student_name');",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{teacher_access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/teacher/attendance/?class_id={{class_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"teacher",
+								"attendance",
+								""
+							],
+							"query": [
+								{
+									"key": "class_id",
+									"value": "{{class_id}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Attendance Records - With Date Filter",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has success field\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('success');",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"});",
+									"",
+									"pm.test(\"Filters are applied correctly\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.filters).to.have.property('start_date');",
+									"    pm.expect(jsonData.filters).to.have.property('end_date');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{teacher_access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/teacher/attendance/?class_id={{class_id}}&start_date=2025-08-01&end_date=2025-08-31",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"teacher",
+								"attendance",
+								""
+							],
+							"query": [
+								{
+									"key": "class_id",
+									"value": "{{class_id}}"
+								},
+								{
+									"key": "start_date",
+									"value": "2025-08-01"
+								},
+								{
+									"key": "end_date",
+									"value": "2025-08-31"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Attendance Records - Individual Student",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has success field\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('success');",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"});",
+									"",
+									"pm.test(\"Student filter is applied\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.filters).to.have.property('student_id');",
+									"    if (jsonData.data.length > 0) {",
+									"        pm.expect(jsonData.data[0].student.id).to.eql(jsonData.filters.student_id);",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{teacher_access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/teacher/attendance/?class_id={{class_id}}&student_id={{student_id_1}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"teacher",
+								"attendance",
+								""
+							],
+							"query": [
+								{
+									"key": "class_id",
+									"value": "{{class_id}}"
+								},
+								{
+									"key": "student_id",
+									"value": "{{student_id_1}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Attendance Records - Missing class_id (Should Fail)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Response contains class_id required error\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('error');",
+									"    pm.expect(jsonData.error).to.include('class_id');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{teacher_access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/teacher/attendance/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"teacher",
+								"attendance",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000"
+		},
+		{
+			"key": "teacher_email",
+			"value": "teacher@example.com",
+			"description": "Email of a test teacher user"
+		},
+		{
+			"key": "teacher_password",
+			"value": "testpassword123",
+			"description": "Password of the test teacher user"
+		},
+		{
+			"key": "parent_access_token",
+			"value": "",
+			"description": "Access token for a parent user (for testing forbidden access)"
+		},
+		{
+			"key": "class_id",
+			"value": "7",
+			"description": "ID of a class that the teacher is assigned to"
+		},
+		{
+			"key": "attendance_date",
+			"value": "2025-08-25",
+			"description": "Date for attendance marking in YYYY-MM-DD format"
+		},
+		{
+			"key": "student_id_1",
+			"value": "1",
+			"description": "ID of first student for attendance testing"
+		},
+		{
+			"key": "student_id_2",
+			"value": "2",
+			"description": "ID of second student for attendance testing"
+		}
+	]
+}

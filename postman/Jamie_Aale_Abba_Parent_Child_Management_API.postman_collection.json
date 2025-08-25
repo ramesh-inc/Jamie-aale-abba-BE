@@ -1,0 +1,225 @@
+{
+	"info": {
+		"_postman_id": "parent-child-management-api-collection",
+		"name": "Jamie Aale Abba - Parent Child Management API",
+		"description": "Parent-only endpoints for managing children profiles and relationships",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000/api/v1",
+			"type": "string"
+		},
+		{
+			"key": "access_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "child_id",
+			"value": "1",
+			"type": "string"
+		},
+		{
+			"key": "class_id",
+			"value": "1",
+			"type": "string"
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{access_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"item": [
+		{
+			"name": "Child Management",
+			"item": [
+				{
+					"name": "View My Children",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/parent/children/",
+							"host": ["{{base_url}}"],
+							"path": ["parent", "children", ""]
+						},
+						"description": "Get a list of all children linked to the authenticated parent's account"
+					}
+				},
+				{
+					"name": "Add New Child",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"student_name\": \"Emma Johnson\",\n    \"date_of_birth\": \"2021-03-15\",\n    \"gender\": \"female\",\n    \"avatar_url\": \"https://example.com/avatar.jpg\",\n    \"medical_conditions\": \"No known allergies\",\n    \"relationship_type\": \"mother\",\n    \"is_primary_contact\": true,\n    \"pickup_authorized\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/parent/children/add/",
+							"host": ["{{base_url}}"],
+							"path": ["parent", "children", "add", ""]
+						},
+						"description": "Add a new child to the parent's account with full validation"
+					}
+				},
+				{
+					"name": "Get Child Details",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/parent/children/{{child_id}}/",
+							"host": ["{{base_url}}"],
+							"path": ["parent", "children", "{{child_id}}", ""]
+						},
+						"description": "Get detailed information about a specific child including class enrollment and relationship details"
+					}
+				},
+				{
+					"name": "Update Child Information",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"student_name\": \"Emma Johnson\",\n    \"date_of_birth\": \"2021-03-15\",\n    \"gender\": \"female\",\n    \"avatar_url\": \"https://example.com/new_avatar.jpg\",\n    \"medical_conditions\": \"Lactose intolerant\",\n    \"relationship_type\": \"mother\",\n    \"is_primary_contact\": true,\n    \"pickup_authorized\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/parent/children/{{child_id}}/",
+							"host": ["{{base_url}}"],
+							"path": ["parent", "children", "{{child_id}}", ""]
+						},
+						"description": "Update child information and relationship details (parent can only update their own children)"
+					}
+				},
+				{
+					"name": "Remove Child from Account",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/parent/children/{{child_id}}/remove/",
+							"host": ["{{base_url}}"],
+							"path": ["parent", "children", "{{child_id}}", "remove", ""]
+						},
+						"description": "Remove the relationship between parent and child (soft delete - doesn't delete the child record)"
+					}
+				}
+			]
+		},
+		{
+			"name": "Class Information",
+			"item": [
+				{
+					"name": "Get Available Classes",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/parent/available-classes/",
+							"host": ["{{base_url}}"],
+							"path": ["parent", "available-classes", ""]
+						},
+						"description": "Get list of all active classes available for enrollment with capacity information"
+					}
+				},
+				{
+					"name": "Request Class Enrollment",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"class_id\": {{class_id}}\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/parent/children/{{child_id}}/request-enrollment/",
+							"host": ["{{base_url}}"],
+							"path": ["parent", "children", "{{child_id}}", "request-enrollment", ""]
+						},
+						"description": "Request enrollment for a child in a specific class (subject to admin approval and capacity limits)"
+					}
+				}
+			]
+		},
+		{
+			"name": "Dashboard & Summary",
+			"item": [
+				{
+					"name": "Get Children Summary",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/parent/children/summary/",
+							"host": ["{{base_url}}"],
+							"path": ["parent", "children", "summary", ""]
+						},
+						"description": "Get summary statistics about all children for parent dashboard including enrollment status and class distribution"
+					}
+				}
+			]
+		}
+	]
+}

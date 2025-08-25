@@ -18,8 +18,8 @@ const schema = yup.object({
     .oneOf([yup.ref('password')], 'Passwords do not match')
     .required('Please confirm your password'),
   subjects: yup.string().required('Subject(s) or specialization is required'),
-  employeeId: yup.string().optional(),
-  qualification: yup.string().optional(),
+  employeeId: yup.string().required('Employee ID is required'),
+  qualification: yup.string().required('Educational qualification is required'),
   experienceYears: yup.number()
     .min(0, 'Experience years must be 0 or greater')
     .required('Experience years is required'),
@@ -175,13 +175,13 @@ export default function TeacherRegistrationForm({ onSuccess, onCancel }: Teacher
 
           <div className="space-y-2">
             <label htmlFor="employeeId" className="block text-sm font-medium text-gray-700">
-              Employee ID (optional)
+              Employee ID <span className="text-red-500">*</span>
             </label>
             <input
               {...register('employeeId')}
               id="employeeId"
               type="text"
-              placeholder="Leave empty to auto-generate"
+              placeholder="Enter employee ID"
               className={`w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 ${errors.employeeId ? 'border-red-500' : ''}`}
             />
             {errors.employeeId && (
@@ -226,7 +226,7 @@ export default function TeacherRegistrationForm({ onSuccess, onCancel }: Teacher
 
         <div className="space-y-2">
           <label htmlFor="qualification" className="block text-sm font-medium text-gray-700">
-            Educational Qualification (optional)
+            Educational Qualification <span className="text-red-500">*</span>
           </label>
           <input
             {...register('qualification')}

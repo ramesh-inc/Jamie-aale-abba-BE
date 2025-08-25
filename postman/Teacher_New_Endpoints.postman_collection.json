@@ -1,0 +1,389 @@
+{
+	"info": {
+		"_postman_id": "teacher-new-endpoints-collection",
+		"name": "Teacher New Endpoints - Quick Test",
+		"description": "Quick test collection for newly implemented teacher endpoints:\n\n1. GET /teacher/classes/{class_id}/students/ - Get students in a specific class\n2. POST /teacher/attendance/mark/ - Mark attendance for students\n3. GET /teacher/attendance/ - View attendance records with filtering\n\nPrerequisites:\n- Teacher must be logged in (use Teacher Portal API collection first)\n- Set environment variables: teacher_access_token, class_id, student_id_1, student_id_2\n- Teacher must be assigned to the class specified in class_id",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{teacher_access_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"exec": [
+					"// Set base URL if not already set",
+					"if (!pm.environment.get(\"base_url\")) {",
+					"    pm.environment.set(\"base_url\", \"http://localhost:8000\");",
+					"}",
+					"",
+					"// Set today's date for attendance_date if not set",
+					"if (!pm.environment.get(\"attendance_date\")) {",
+					"    const today = new Date().toISOString().split('T')[0];",
+					"    pm.environment.set(\"attendance_date\", today);",
+					"}"
+				],
+				"type": "text/javascript"
+			}
+		}
+	],
+	"item": [
+		{
+			"name": "1. Get Class Students",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Response has success field\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('success');",
+							"    pm.expect(jsonData.success).to.be.true;",
+							"});",
+							"",
+							"pm.test(\"Response has student data\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('data');",
+							"    pm.expect(jsonData.data).to.be.an('array');",
+							"    pm.expect(jsonData).to.have.property('class_info');",
+							"});",
+							"",
+							"pm.test(\"Auto-set student IDs for next tests\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    if (jsonData.data && jsonData.data.length > 0) {",
+							"        pm.environment.set('student_id_1', jsonData.data[0].id.toString());",
+							"        if (jsonData.data.length > 1) {",
+							"            pm.environment.set('student_id_2', jsonData.data[1].id.toString());",
+							"        }",
+							"        console.log('Auto-set student_id_1:', jsonData.data[0].id);",
+							"        if (jsonData.data.length > 1) console.log('Auto-set student_id_2:', jsonData.data[1].id);",
+							"    }",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/api/v1/teacher/classes/{{class_id}}/students/",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"teacher",
+						"classes",
+						"{{class_id}}",
+						"students",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "2. Mark Attendance",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 201\", function () {",
+							"    pm.response.to.have.status(201);",
+							"});",
+							"",
+							"pm.test(\"Attendance marked successfully\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('success');",
+							"    pm.expect(jsonData.success).to.be.true;",
+							"    pm.expect(jsonData).to.have.property('message');",
+							"    pm.expect(jsonData.data).to.have.property('total_records');",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"class_id\": {{class_id}},\n    \"attendance_date\": \"{{attendance_date}}\",\n    \"attendance_records\": [\n        {\n            \"student_id\": {{student_id_1}},\n            \"status\": \"present\",\n            \"notes\": \"On time - Test via Postman\"\n        },\n        {\n            \"student_id\": {{student_id_2}},\n            \"status\": \"late\",\n            \"notes\": \"Arrived 5 minutes late - Test via Postman\"\n        }\n    ]\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/v1/teacher/attendance/mark/",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"teacher",
+						"attendance",
+						"mark",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "3. Get Attendance Records - All for Class",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Attendance records retrieved\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('success');",
+							"    pm.expect(jsonData.success).to.be.true;",
+							"    pm.expect(jsonData.data).to.be.an('array');",
+							"    pm.expect(jsonData).to.have.property('filters');",
+							"});",
+							"",
+							"pm.test(\"Records contain expected fields\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    if (jsonData.data.length > 0) {",
+							"        var record = jsonData.data[0];",
+							"        pm.expect(record).to.have.property('student');",
+							"        pm.expect(record).to.have.property('attendance_date');",
+							"        pm.expect(record).to.have.property('status');",
+							"        pm.expect(record).to.have.property('marked_by');",
+							"    }",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/api/v1/teacher/attendance/?class_id={{class_id}}",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"teacher",
+						"attendance",
+						""
+					],
+					"query": [
+						{
+							"key": "class_id",
+							"value": "{{class_id}}"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "4. Get Attendance Records - Single Student",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Student-filtered records retrieved\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('success');",
+							"    pm.expect(jsonData.success).to.be.true;",
+							"    pm.expect(jsonData.filters).to.have.property('student_id');",
+							"});",
+							"",
+							"pm.test(\"All records are for the specified student\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    const expectedStudentId = parseInt(pm.environment.get('student_id_1'));",
+							"    jsonData.data.forEach(function(record) {",
+							"        pm.expect(record.student.id).to.equal(expectedStudentId);",
+							"    });",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/api/v1/teacher/attendance/?class_id={{class_id}}&student_id={{student_id_1}}",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"teacher",
+						"attendance",
+						""
+					],
+					"query": [
+						{
+							"key": "class_id",
+							"value": "{{class_id}}"
+						},
+						{
+							"key": "student_id",
+							"value": "{{student_id_1}}"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "5. Get Attendance Records - Date Range Filter",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Date-filtered records retrieved\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('success');",
+							"    pm.expect(jsonData.success).to.be.true;",
+							"    pm.expect(jsonData.filters).to.have.property('start_date');",
+							"    pm.expect(jsonData.filters).to.have.property('end_date');",
+							"});",
+							"",
+							"pm.test(\"Records are within date range\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    const startDate = '2025-08-01';",
+							"    const endDate = '2025-08-31';",
+							"    jsonData.data.forEach(function(record) {",
+							"        pm.expect(record.attendance_date).to.be.at.least(startDate);",
+							"        pm.expect(record.attendance_date).to.be.at.most(endDate);",
+							"    });",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/api/v1/teacher/attendance/?class_id={{class_id}}&start_date=2025-08-01&end_date=2025-08-31",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"teacher",
+						"attendance",
+						""
+					],
+					"query": [
+						{
+							"key": "class_id",
+							"value": "{{class_id}}"
+						},
+						{
+							"key": "start_date",
+							"value": "2025-08-01"
+						},
+						{
+							"key": "end_date",
+							"value": "2025-08-31"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000",
+			"description": "Base URL for the API"
+		},
+		{
+			"key": "teacher_access_token",
+			"value": "",
+			"description": "JWT access token for teacher authentication"
+		},
+		{
+			"key": "class_id",
+			"value": "7",
+			"description": "ID of a class that the teacher is assigned to"
+		},
+		{
+			"key": "student_id_1",
+			"value": "",
+			"description": "ID of first student (auto-populated from step 1)"
+		},
+		{
+			"key": "student_id_2",
+			"value": "",
+			"description": "ID of second student (auto-populated from step 1)"
+		},
+		{
+			"key": "attendance_date",
+			"value": "",
+			"description": "Date for attendance marking (auto-populated to today's date)"
+		}
+	]
+}

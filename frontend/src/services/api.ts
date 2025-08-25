@@ -237,6 +237,119 @@ export const adminApi = {
     });
     return response.data;
   },
+
+  // Class Management
+  getClasses: async (params?: any) => {
+    const response = await api.get('/admin/classes/', { params });
+    return response.data;
+  },
+
+  createClass: async (data: any) => {
+    const response = await api.post('/admin/classes/', data);
+    return response.data;
+  },
+
+  getClass: async (classId: number) => {
+    const response = await api.get(`/admin/classes/${classId}/`);
+    return response.data;
+  },
+
+  updateClass: async (classId: number, data: any) => {
+    const response = await api.put(`/admin/classes/${classId}/`, data);
+    return response.data;
+  },
+
+  deleteClass: async (classId: number) => {
+    const response = await api.delete(`/admin/classes/${classId}/`);
+    return response.data;
+  },
+
+  // Bulk unassignment operations for class deletion
+  unassignAllStudentsFromClass: async (classId: number) => {
+    const response = await api.post(`/admin/classes/${classId}/unassign-all-students/`);
+    return response.data;
+  },
+
+  unassignAllTeachersFromClass: async (classId: number) => {
+    const response = await api.post(`/admin/classes/${classId}/unassign-all-teachers/`);
+    return response.data;
+  },
+
+  // Student Management
+  getStudents: async (params?: any) => {
+    const response = await api.get('/admin/students/', { params });
+    return response.data;
+  },
+
+  createStudent: async (data: any) => {
+    const response = await api.post('/admin/students/', data);
+    return response.data;
+  },
+
+  getStudent: async (studentId: number) => {
+    const response = await api.get(`/admin/students/${studentId}/`);
+    return response.data;
+  },
+
+  updateStudent: async (studentId: number, data: any) => {
+    const response = await api.put(`/admin/students/${studentId}/`, data);
+    return response.data;
+  },
+
+  deleteStudent: async (studentId: number) => {
+    const response = await api.delete(`/admin/students/${studentId}/`);
+    return response.data;
+  },
+
+  // Teacher-Student Assignments
+  getTeacherAssignments: async (params?: any) => {
+    const response = await api.get('/admin/teacher-assignments/', { params });
+    return response.data;
+  },
+
+  assignStudentsToTeacher: async (data: {
+    teacher_id: number;
+    class_id: number;
+    student_ids: number[];
+    role?: string;
+  }) => {
+    const response = await api.post('/admin/assign-students/', data);
+    return response.data;
+  },
+
+  reassignStudents: async (data: {
+    student_ids: number[];
+    from_class_id?: number;
+    to_class_id: number;
+  }) => {
+    const response = await api.post('/admin/reassign-students/', data);
+    return response.data;
+  },
+
+  removeStudentAssignment: async (studentId: number) => {
+    const response = await api.delete(`/admin/remove-student-assignment/${studentId}/`);
+    return response.data;
+  },
+
+  assignTeacherToClass: async (data: {
+    teacher_id: number;
+    class_id: number;
+    role?: string;
+  }) => {
+    const response = await api.post('/admin/assign-teacher-to-class/', data);
+    return response.data;
+  },
+
+  removeTeacherFromClass: async (teacherId: number, classId: number) => {
+    const response = await api.delete(`/admin/remove-teacher-from-class/${teacherId}/${classId}/`);
+    return response.data;
+  },
+
+  // Dashboard Statistics
+  getDashboardStats: async () => {
+    const response = await api.get('/admin/dashboard-stats/');
+    return response.data;
+  },
 };
 
 // User profile API functions (Self-service for all user types)
@@ -248,6 +361,112 @@ export const userApi = {
 
   updateProfile: async (data: any) => {
     const response = await api.put('/auth/profile/update/', data);
+    return response.data;
+  },
+};
+
+// Parent Child Management API functions (Parent access only)
+export const parentApi = {
+  // Get all children linked to parent account
+  getChildren: async () => {
+    const response = await api.get('/parent/children/');
+    return response.data;
+  },
+
+  // Add a new child
+  addChild: async (data: {
+    student_name: string;
+    date_of_birth: string;
+    gender: string;
+    avatar_url?: string;
+    medical_conditions?: string;
+    relationship_type: string;
+    is_primary_contact?: boolean;
+    pickup_authorized?: boolean;
+  }) => {
+    const response = await api.post('/parent/children/add/', data);
+    return response.data;
+  },
+
+  // Get detailed information about a specific child
+  getChildDetails: async (childId: number) => {
+    const response = await api.get(`/parent/children/${childId}/`);
+    return response.data;
+  },
+
+  // Update child information
+  updateChild: async (childId: number, data: any) => {
+    const response = await api.put(`/parent/children/${childId}/`, data);
+    return response.data;
+  },
+
+  // Remove child from parent account (removes relationship, not child record)
+  removeChild: async (childId: number) => {
+    const response = await api.delete(`/parent/children/${childId}/remove/`);
+    return response.data;
+  },
+
+  // Get summary of all children for dashboard
+  getChildSummary: async () => {
+    const response = await api.get('/parent/children/summary/');
+    return response.data;
+  },
+
+  // Get available classes for enrollment
+  getAvailableClasses: async () => {
+    const response = await api.get('/parent/available-classes/');
+    return response.data;
+  },
+
+  // Request enrollment for a child in a specific class
+  requestEnrollment: async (childId: number, classId: number) => {
+    const response = await api.post(`/parent/children/${childId}/request-enrollment/`, {
+      class_id: classId
+    });
+    return response.data;
+  },
+};
+
+// Teacher API functions
+export const teacherApi = {
+  // Attendance Management
+  markAttendance: async (data: {
+    class_id: number;
+    attendance_date: string;
+    attendance_records: Array<{
+      student_id: number;
+      status: 'present' | 'absent' | 'late';
+      notes?: string;
+    }>;
+  }) => {
+    const response = await api.post('/teacher/attendance/mark/', data);
+    return response.data;
+  },
+
+  getAttendance: async (params?: {
+    class_id?: number;
+    attendance_date?: string;
+    student_id?: number;
+  }) => {
+    const response = await api.get('/teacher/attendance/', { params });
+    return response.data;
+  },
+
+  updateAttendance: async (attendanceId: number, data: {
+    status?: 'present' | 'absent' | 'late';
+    notes?: string;
+  }) => {
+    const response = await api.put(`/teacher/attendance/${attendanceId}/`, data);
+    return response.data;
+  },
+
+  getMyClasses: async () => {
+    const response = await api.get('/teacher/my-classes/');
+    return response.data;
+  },
+
+  getClassStudents: async (classId: number) => {
+    const response = await api.get(`/teacher/classes/${classId}/students/`);
     return response.data;
   },
 };

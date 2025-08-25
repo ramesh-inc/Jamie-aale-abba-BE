@@ -1,0 +1,485 @@
+{
+	"info": {
+		"_postman_id": "class-management-api-collection",
+		"name": "Jamie Aale Abba - Class Management API",
+		"description": "Class management and teacher-student assignment endpoints for nursery school management",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000/api/v1",
+			"type": "string"
+		},
+		{
+			"key": "access_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "class_id",
+			"value": "1",
+			"type": "string"
+		},
+		{
+			"key": "student_id",
+			"value": "1",
+			"type": "string"
+		},
+		{
+			"key": "teacher_id",
+			"value": "1",
+			"type": "string"
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{access_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"item": [
+		{
+			"name": "Class Management",
+			"item": [
+				{
+					"name": "List Classes",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/admin/classes/?search=&is_active=true",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "classes", ""],
+							"query": [
+								{
+									"key": "search",
+									"value": "",
+									"description": "Search by class name, code, or age group"
+								},
+								{
+									"key": "is_active",
+									"value": "true",
+									"description": "Filter by active status (true/false)"
+								}
+							]
+						},
+						"description": "Get list of all nursery classes with search and filter options"
+					}
+				},
+				{
+					"name": "Create Class",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"class_name\": \"Nursery 1\",\n    \"class_code\": \"N1-2024\",\n    \"age_group\": \"2-3 years\",\n    \"capacity\": 15,\n    \"room_number\": \"Room 101\",\n    \"academic_year\": \"2024-2025\",\n    \"is_active\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/classes/",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "classes", ""]
+						},
+						"description": "Create a new nursery class"
+					}
+				},
+				{
+					"name": "Get Class Details",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/admin/classes/{{class_id}}/",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "classes", "{{class_id}}", ""]
+						},
+						"description": "Get detailed information about a specific class including enrolled students and assigned teachers"
+					}
+				},
+				{
+					"name": "Update Class",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"class_name\": \"Nursery 1 - Updated\",\n    \"class_code\": \"N1-2024\",\n    \"age_group\": \"2-3 years\",\n    \"capacity\": 20,\n    \"room_number\": \"Room 102\",\n    \"academic_year\": \"2024-2025\",\n    \"is_active\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/classes/{{class_id}}/",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "classes", "{{class_id}}", ""]
+						},
+						"description": "Update class information"
+					}
+				},
+				{
+					"name": "Deactivate Class",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/admin/classes/{{class_id}}/",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "classes", "{{class_id}}", ""]
+						},
+						"description": "Soft delete (deactivate) a class"
+					}
+				}
+			]
+		},
+		{
+			"name": "Student Management",
+			"item": [
+				{
+					"name": "List Students",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/admin/students/?search=&class_id=&enrollment_status=&is_active=true",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "students", ""],
+							"query": [
+								{
+									"key": "search",
+									"value": "",
+									"description": "Search by student name or ID"
+								},
+								{
+									"key": "class_id",
+									"value": "",
+									"description": "Filter by specific class"
+								},
+								{
+									"key": "enrollment_status",
+									"value": "",
+									"description": "Filter by enrollment status (enrolled/unassigned)"
+								},
+								{
+									"key": "is_active",
+									"value": "true",
+									"description": "Filter by active status"
+								}
+							]
+						},
+						"description": "Get list of all students with filtering and search options"
+					}
+				},
+				{
+					"name": "Create Student",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"student_name\": \"Emma Johnson\",\n    \"student_id\": \"STU001\",\n    \"date_of_birth\": \"2021-03-15\",\n    \"gender\": \"female\",\n    \"avatar_url\": \"\",\n    \"medical_conditions\": \"No known allergies\",\n    \"is_active\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/students/",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "students", ""]
+						},
+						"description": "Create a new student record"
+					}
+				},
+				{
+					"name": "Get Student Details",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/admin/students/{{student_id}}/",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "students", "{{student_id}}", ""]
+						},
+						"description": "Get detailed student information including current class and parent information"
+					}
+				},
+				{
+					"name": "Update Student",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"student_name\": \"Emma Johnson\",\n    \"student_id\": \"STU001\",\n    \"date_of_birth\": \"2021-03-15\",\n    \"gender\": \"female\",\n    \"avatar_url\": \"\",\n    \"medical_conditions\": \"Lactose intolerant\",\n    \"is_active\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/students/{{student_id}}/",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "students", "{{student_id}}", ""]
+						},
+						"description": "Update student information"
+					}
+				},
+				{
+					"name": "Deactivate Student",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/admin/students/{{student_id}}/",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "students", "{{student_id}}", ""]
+						},
+						"description": "Soft delete (deactivate) a student"
+					}
+				}
+			]
+		},
+		{
+			"name": "Teacher-Student Assignments",
+			"item": [
+				{
+					"name": "List Teacher Assignments",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/admin/teacher-assignments/?search=&class_id=&assignment_status=&subject=",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "teacher-assignments", ""],
+							"query": [
+								{
+									"key": "search",
+									"value": "",
+									"description": "Search by teacher name, email, or employee ID"
+								},
+								{
+									"key": "class_id",
+									"value": "",
+									"description": "Filter by specific class"
+								},
+								{
+									"key": "assignment_status",
+									"value": "",
+									"description": "Filter by assignment status (assigned/unassigned)"
+								},
+								{
+									"key": "subject",
+									"value": "",
+									"description": "Filter by subject/specialization"
+								}
+							]
+						},
+						"description": "Get list of all teachers with their class assignments and student counts"
+					}
+				},
+				{
+					"name": "Assign Students to Teacher",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"teacher_id\": 1,\n    \"class_id\": 1,\n    \"student_ids\": [1, 2, 3],\n    \"role\": \"primary\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/assign-students/",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "assign-students", ""]
+						},
+						"description": "Assign multiple students to a teacher and class (bulk assignment)"
+					}
+				},
+				{
+					"name": "Reassign Students",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"student_ids\": [1, 2],\n    \"from_class_id\": 1,\n    \"to_class_id\": 2\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/reassign-students/",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "reassign-students", ""]
+						},
+						"description": "Reassign students from one class to another"
+					}
+				},
+				{
+					"name": "Remove Student Assignment",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/admin/remove-student-assignment/{{student_id}}/",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "remove-student-assignment", "{{student_id}}", ""]
+						},
+						"description": "Remove a student from their current class assignment"
+					}
+				},
+				{
+					"name": "Assign Teacher to Class",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"teacher_id\": 1,\n    \"class_id\": 1,\n    \"role\": \"primary\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/assign-teacher-to-class/",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "assign-teacher-to-class", ""]
+						},
+						"description": "Assign a teacher to a specific class with a role (primary/assistant/substitute)"
+					}
+				},
+				{
+					"name": "Remove Teacher from Class",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/admin/remove-teacher-from-class/{{teacher_id}}/{{class_id}}/",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "remove-teacher-from-class", "{{teacher_id}}", "{{class_id}}", ""]
+						},
+						"description": "Remove a teacher from a specific class assignment"
+					}
+				}
+			]
+		},
+		{
+			"name": "Dashboard & Statistics",
+			"item": [
+				{
+					"name": "Get Dashboard Statistics",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/admin/dashboard-stats/",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "dashboard-stats", ""]
+						},
+						"description": "Get comprehensive statistics for admin dashboard including class utilization, student/teacher counts, and assignment statistics"
+					}
+				}
+			]
+		}
+	]
+}

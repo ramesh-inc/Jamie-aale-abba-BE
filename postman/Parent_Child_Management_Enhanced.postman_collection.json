@@ -1,0 +1,632 @@
+{
+	"info": {
+		"_postman_id": "parent-child-management-enhanced-collection",
+		"name": "Parent Child Management - Enhanced Testing",
+		"description": "Enhanced Postman collection for testing parent-child management endpoints with comprehensive test scripts and validation.\n\nEndpoints included:\n- GET /parent/children/ - View all children\n- POST /parent/children/add/ - Add new child\n- GET /parent/children/{id}/ - Get child details\n- PUT /parent/children/{id}/ - Update child info\n- DELETE /parent/children/{id}/remove/ - Remove child relationship\n- GET /parent/available-classes/ - Get available classes\n- POST /parent/children/{id}/request-enrollment/ - Request class enrollment\n- GET /parent/children/summary/ - Get children summary\n\nPrerequisites:\n- Parent user must be registered and email verified\n- Set environment variables: parent_email, parent_password\n- Run authentication first to get access token",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{parent_access_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"exec": [
+					"// Set base URL if not already set",
+					"if (!pm.environment.get(\"base_url\")) {",
+					"    pm.environment.set(\"base_url\", \"http://localhost:8000\");",
+					"}"
+				],
+				"type": "text/javascript"
+			}
+		}
+	],
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Login as Parent",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has access token\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('access');",
+									"    pm.environment.set('parent_access_token', jsonData.access);",
+									"    pm.environment.set('parent_refresh_token', jsonData.refresh);",
+									"});",
+									"",
+									"pm.test(\"User type is parent\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.user.user_type).to.eql('parent');",
+									"});",
+									"",
+									"pm.test(\"Email is verified\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.user.is_email_verified).to.be.true;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"{{parent_email}}\",\n    \"password\": \"{{parent_password}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/login/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"login",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Child Management",
+			"item": [
+				{
+					"name": "1. View My Children",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has success field\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('success');",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"});",
+									"",
+									"pm.test(\"Response has data array\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('data');",
+									"    pm.expect(jsonData.data).to.be.an('array');",
+									"});",
+									"",
+									"pm.test(\"Auto-set child_id for next tests\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.data && jsonData.data.length > 0) {",
+									"        pm.environment.set('child_id', jsonData.data[0].id.toString());",
+									"        console.log('Auto-set child_id:', jsonData.data[0].id);",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/parent/children/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"parent",
+								"children",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "2. Add New Child",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Child created successfully\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('success');",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"    pm.expect(jsonData).to.have.property('message');",
+									"});",
+									"",
+									"pm.test(\"Response contains child data\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('data');",
+									"    pm.expect(jsonData.data).to.have.property('student');",
+									"    pm.expect(jsonData.data).to.have.property('relationship');",
+									"});",
+									"",
+									"pm.test(\"Set new child ID for further tests\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.data && jsonData.data.student) {",
+									"        pm.environment.set('new_child_id', jsonData.data.student.id.toString());",
+									"        console.log('New child created with ID:', jsonData.data.student.id);",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"student_name\": \"Test Child {{$randomFirstName}}\",\n    \"date_of_birth\": \"2020-05-15\",\n    \"gender\": \"female\",\n    \"avatar_url\": \"https://example.com/avatar.jpg\",\n    \"medical_conditions\": \"No known allergies - Test child\",\n    \"relationship_type\": \"mother\",\n    \"is_primary_contact\": true,\n    \"pickup_authorized\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/parent/children/add/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"parent",
+								"children",
+								"add",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "3. Get Child Details",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Child details retrieved\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('success');",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"    pm.expect(jsonData.data).to.have.property('student');",
+									"    pm.expect(jsonData.data).to.have.property('relationship');",
+									"});",
+									"",
+									"pm.test(\"Student data structure is correct\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    var student = jsonData.data.student;",
+									"    pm.expect(student).to.have.property('id');",
+									"    pm.expect(student).to.have.property('student_name');",
+									"    pm.expect(student).to.have.property('student_id');",
+									"    pm.expect(student).to.have.property('date_of_birth');",
+									"    pm.expect(student).to.have.property('gender');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/parent/children/{{child_id}}/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"parent",
+								"children",
+								"{{child_id}}",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "4. Update Child Information",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Child updated successfully\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('success');",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"    pm.expect(jsonData).to.have.property('message');",
+									"});",
+									"",
+									"pm.test(\"Updated data is reflected\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data.student.medical_conditions).to.include('Updated');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"medical_conditions\": \"Updated medical conditions - No known allergies\",\n    \"relationship_type\": \"father\",\n    \"pickup_authorized\": false\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/parent/children/{{child_id}}/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"parent",
+								"children",
+								"{{child_id}}",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Class Management",
+			"item": [
+				{
+					"name": "5. Get Available Classes",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Available classes retrieved\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('success');",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"    pm.expect(jsonData.data).to.be.an('array');",
+									"});",
+									"",
+									"pm.test(\"Auto-set class_id for enrollment test\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.data && jsonData.data.length > 0) {",
+									"        pm.environment.set('available_class_id', jsonData.data[0].id.toString());",
+									"        console.log('Auto-set available_class_id:', jsonData.data[0].id);",
+									"    }",
+									"});",
+									"",
+									"pm.test(\"Class data structure is correct\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.data.length > 0) {",
+									"        var classItem = jsonData.data[0];",
+									"        pm.expect(classItem).to.have.property('id');",
+									"        pm.expect(classItem).to.have.property('class_name');",
+									"        pm.expect(classItem).to.have.property('class_code');",
+									"        pm.expect(classItem).to.have.property('capacity');",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/parent/available-classes/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"parent",
+								"available-classes",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "6. Request Class Enrollment",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Enrollment request submitted\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('success');",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"    pm.expect(jsonData).to.have.property('message');",
+									"});",
+									"",
+									"pm.test(\"Enrollment data is returned\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('data');",
+									"    pm.expect(jsonData.data).to.have.property('student');",
+									"    pm.expect(jsonData.data).to.have.property('class');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"class_id\": {{available_class_id}}\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/parent/children/{{child_id}}/request-enrollment/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"parent",
+								"children",
+								"{{child_id}}",
+								"request-enrollment",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Dashboard & Summary",
+			"item": [
+				{
+					"name": "7. Get Children Summary",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Summary data retrieved\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('success');",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"    pm.expect(jsonData).to.have.property('data');",
+									"});",
+									"",
+									"pm.test(\"Summary contains statistics\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.have.property('total_children');",
+									"    pm.expect(jsonData.data).to.have.property('enrolled_children');",
+									"    pm.expect(jsonData.data).to.have.property('pending_enrollments');",
+									"    pm.expect(jsonData.data).to.have.property('children');",
+									"});",
+									"",
+									"pm.test(\"Children array contains proper data\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.data.children && jsonData.data.children.length > 0) {",
+									"        var child = jsonData.data.children[0];",
+									"        pm.expect(child).to.have.property('student');",
+									"        pm.expect(child).to.have.property('relationship');",
+									"        pm.expect(child).to.have.property('class_enrollment');",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/parent/children/summary/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"parent",
+								"children",
+								"summary",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Cleanup (Optional)",
+			"item": [
+				{
+					"name": "8. Remove Child Relationship",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Child relationship removed\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('success');",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"    pm.expect(jsonData).to.have.property('message');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/parent/children/{{new_child_id}}/remove/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"parent",
+								"children",
+								"{{new_child_id}}",
+								"remove",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000",
+			"description": "Base URL for the API"
+		},
+		{
+			"key": "parent_email",
+			"value": "parent@example.com",
+			"description": "Email of a verified parent user"
+		},
+		{
+			"key": "parent_password",
+			"value": "testpassword123",
+			"description": "Password of the parent user"
+		},
+		{
+			"key": "parent_access_token",
+			"value": "",
+			"description": "JWT access token for parent authentication"
+		},
+		{
+			"key": "child_id",
+			"value": "",
+			"description": "ID of existing child (auto-populated from step 1)"
+		},
+		{
+			"key": "new_child_id",
+			"value": "",
+			"description": "ID of newly created child (auto-populated from step 2)"
+		},
+		{
+			"key": "available_class_id",
+			"value": "",
+			"description": "ID of available class (auto-populated from step 5)"
+		}
+	]
+}

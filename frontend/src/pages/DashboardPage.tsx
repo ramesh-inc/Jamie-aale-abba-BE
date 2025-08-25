@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '../utils/auth';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import ParentSettings from '../components/settings/ParentSettings';
+import ChildrenManagement from '../components/parent/ChildrenManagement';
 
 type TabType = 'home' | 'children' | 'activities' | 'messages' | 'attendance' | 'payments' | 'settings';
 
@@ -109,6 +110,9 @@ const DashboardPage: React.FC = () => {
           </div>
         );
       
+      case 'children':
+        return <ChildrenManagement />;
+
       case 'settings':
         return <ParentSettings />;
 
