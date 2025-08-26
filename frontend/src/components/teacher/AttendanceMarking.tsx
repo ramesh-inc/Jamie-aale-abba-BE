@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { teacherApi } from '../../services/api';
 
 interface Student {
@@ -86,6 +86,7 @@ const AttendanceMarking: React.FC = () => {
     new Date().toISOString().split('T')[0] // Today's date in YYYY-MM-DD format
   );
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
+  const [markedDates, setMarkedDates] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [notification, setNotification] = useState<{
@@ -93,22 +94,7 @@ const AttendanceMarking: React.FC = () => {
     type: 'success' | 'error';
   } | null>(null);
 
-  // Load classes on component mount
-  useEffect(() => {
-    loadClasses();
-  }, []);
-
-  // Load students when class is selected
-  useEffect(() => {
-    if (selectedClass) {
-      loadStudents();
-    } else {
-      setStudents([]);
-      setAttendanceRecords([]);
-    }
-  }, [selectedClass]);
-
-  const loadClasses = async () => {
+  const loadClasses = useCallback(async () => {
     setLoading(true);
     try {
       const response = await teacherApi.getMyClasses();
@@ -125,9 +111,22 @@ const AttendanceMarking: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const loadStudents = async () => {
+  const loadMarkedDates = useCallback(async () => {
+    if (!selectedClass) return;
+
+    try {
+      const response = await teacherApi.getMarkedAttendanceDates(selectedClass);
+      const markedDatesData = response.data?.marked_dates || [];
+      setMarkedDates(markedDatesData);
+    } catch (error) {
+      console.error('Failed to load marked dates:', error);
+      // Don't show error notification for this since it's not critical
+    }
+  }, [selectedClass]);
+
+  const loadStudents = useCallback(async () => {
     if (!selectedClass) return;
 
     setLoading(true);
@@ -154,7 +153,7 @@ const AttendanceMarking: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedClass]);
 
   const updateAttendanceStatus = (studentId: number, status: 'present' | 'absent' | 'late') => {
     setAttendanceRecords(prev =>
@@ -205,10 +204,16 @@ const AttendanceMarking: React.FC = () => {
         type: 'success'
       });
       
+      // Refresh marked dates to include the newly saved date
+      if (selectedClass) {
+        await loadMarkedDates();
+      }
+      
       // Reset form after successful save
       setSelectedClass(null);
       setStudents([]);
       setAttendanceRecords([]);
+      setMarkedDates([]);
     } catch (error) {
       console.error('Failed to save attendance:', error);
       let errorMessage = 'Failed to save attendance. Please try again.';
@@ -242,6 +247,28 @@ const AttendanceMarking: React.FC = () => {
     }
   };
 
+  // Load classes on component mount
+  useEffect(() => {
+    loadClasses();
+  }, [loadClasses]);
+
+  // Load students and marked dates when class is selected
+  useEffect(() => {
+    if (selectedClass) {
+      loadStudents();
+      loadMarkedDates();
+    } else {
+      setStudents([]);
+      setAttendanceRecords([]);
+      setMarkedDates([]);
+    }
+  }, [selectedClass, loadStudents, loadMarkedDates]);
+
+  // Helper function to check if a date is already marked
+  const isDateMarked = (date: string) => {
+    return markedDates.includes(date);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -255,14 +282,32 @@ const AttendanceMarking: React.FC = () => {
             <label htmlFor="attendance-date" className="block text-sm font-medium text-gray-700 mb-2">
               Date
             </label>
-            <input
-              type="date"
-              id="attendance-date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              max={new Date().toISOString().split('T')[0]} // Cannot select future dates
-              className="w-full h-10 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
+            <div className="relative">
+              <input
+                type="date"
+                id="attendance-date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                max={new Date().toISOString().split('T')[0]} // Cannot select future dates
+                className={`w-full h-10 px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:border-blue-500 ${
+                  selectedClass && isDateMarked(selectedDate)
+                    ? 'border-red-300 bg-red-50 text-red-900 focus:ring-red-500 pr-10'
+                    : 'border-gray-300 focus:ring-blue-500'
+                }`}
+              />
+              {selectedClass && isDateMarked(selectedDate) && (
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                  <svg className="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                </div>
+              )}
+            </div>
+            {selectedClass && isDateMarked(selectedDate) && (
+              <p className="mt-2 text-sm text-red-600">
+                Attendance for this date has already been marked for this class.
+              </p>
+            )}
           </div>
 
           {/* Class Selection */}
@@ -289,7 +334,7 @@ const AttendanceMarking: React.FC = () => {
       </div>
 
       {/* Student List and Attendance */}
-      {selectedClass && students.length > 0 && (
+      {selectedClass && students.length > 0 && !isDateMarked(selectedDate) && (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-semibold text-gray-900">
@@ -367,7 +412,7 @@ const AttendanceMarking: React.FC = () => {
           <div className="mt-6 flex justify-end">
             <button
               onClick={saveAttendance}
-              disabled={saving}
+              disabled={saving || isDateMarked(selectedDate)}
               className="px-6 py-3 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {saving ? (
@@ -375,6 +420,8 @@ const AttendanceMarking: React.FC = () => {
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                   <span>Saving...</span>
                 </div>
+              ) : isDateMarked(selectedDate) ? (
+                'Attendance Already Marked'
               ) : (
                 'Save Attendance'
               )}

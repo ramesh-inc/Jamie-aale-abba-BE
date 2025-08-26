@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { teacherApi } from '../../services/api';
 
 interface Student {
@@ -50,37 +50,9 @@ const AttendanceViewing: React.FC = () => {
   const [endDate, setEndDate] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [viewMode, setViewMode] = useState<'class' | 'student'>('class');
+  const [expandedDates, setExpandedDates] = useState<Set<string>>(new Set());
 
-  // Initialize date range (last 30 days)
-  useEffect(() => {
-    const today = new Date();
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(today.getDate() - 30);
-    
-    setEndDate(today.toISOString().split('T')[0]);
-    setStartDate(thirtyDaysAgo.toISOString().split('T')[0]);
-  }, []);
-
-  // Load classes on component mount
-  useEffect(() => {
-    loadClasses();
-  }, []);
-
-  // Load students when class is selected
-  useEffect(() => {
-    if (selectedClass && viewMode === 'student') {
-      loadStudents();
-    }
-  }, [selectedClass, viewMode]);
-
-  // Load attendance data when filters change
-  useEffect(() => {
-    if (selectedClass && startDate && endDate) {
-      loadAttendanceData();
-    }
-  }, [selectedClass, selectedStudent, startDate, endDate, viewMode]);
-
-  const loadClasses = async () => {
+  const loadClasses = useCallback(async () => {
     setLoading(true);
     try {
       const response = await teacherApi.getMyClasses();
@@ -93,9 +65,9 @@ const AttendanceViewing: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const loadStudents = async () => {
+  const loadStudents = useCallback(async () => {
     if (!selectedClass) return;
 
     setLoading(true);
@@ -110,9 +82,9 @@ const AttendanceViewing: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedClass]);
 
-  const loadAttendanceData = async () => {
+  const loadAttendanceData = useCallback(async () => {
     if (!selectedClass) return;
 
     setLoading(true);
@@ -154,7 +126,7 @@ const AttendanceViewing: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedClass, selectedStudent, startDate, endDate, viewMode]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -219,6 +191,57 @@ const AttendanceViewing: React.FC = () => {
     acc[date].push(record);
     return acc;
   }, {} as Record<string, AttendanceRecord[]>);
+
+  const toggleDateExpansion = (date: string) => {
+    const newExpandedDates = new Set(expandedDates);
+    if (newExpandedDates.has(date)) {
+      newExpandedDates.delete(date);
+    } else {
+      newExpandedDates.add(date);
+    }
+    setExpandedDates(newExpandedDates);
+  };
+
+  const expandAllDates = () => {
+    setExpandedDates(new Set(Object.keys(groupedAttendance)));
+  };
+
+  const collapseAllDates = () => {
+    setExpandedDates(new Set());
+  };
+
+  // Initialize date range (last 30 days)
+  useEffect(() => {
+    const today = new Date();
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(today.getDate() - 30);
+    
+    setEndDate(today.toISOString().split('T')[0]);
+    setStartDate(thirtyDaysAgo.toISOString().split('T')[0]);
+  }, []);
+
+  // Load classes on component mount
+  useEffect(() => {
+    loadClasses();
+  }, [loadClasses]);
+
+  // Load students when class is selected
+  useEffect(() => {
+    if (selectedClass && viewMode === 'student') {
+      loadStudents();
+    }
+  }, [selectedClass, viewMode, loadStudents]);
+
+  // Load attendance data when filters change
+  useEffect(() => {
+    if (selectedClass && startDate && endDate) {
+      // For student view, also require student selection
+      if (viewMode === 'student' && !selectedStudent) {
+        return; // Don't load data until student is selected
+      }
+      loadAttendanceData();
+    }
+  }, [selectedClass, selectedStudent, startDate, endDate, viewMode, loadAttendanceData]);
 
   return (
     <div className="space-y-6">
@@ -345,74 +368,112 @@ const AttendanceViewing: React.FC = () => {
             </div>
           ) : (
             <div className="p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-6">
-                Attendance Records ({attendanceRecords.length} entries)
-              </h3>
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Attendance Records ({attendanceRecords.length} entries)
+                </h3>
+                
+                {viewMode === 'class' && Object.keys(groupedAttendance).length > 0 && (
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={expandAllDates}
+                      className="px-3 py-1 text-xs font-medium text-blue-600 hover:text-blue-700 border border-blue-300 hover:border-blue-400 rounded-md transition-colors"
+                    >
+                      Expand All
+                    </button>
+                    <button
+                      onClick={collapseAllDates}
+                      className="px-3 py-1 text-xs font-medium text-gray-600 hover:text-gray-700 border border-gray-300 hover:border-gray-400 rounded-md transition-colors"
+                    >
+                      Collapse All
+                    </button>
+                  </div>
+                )}
+              </div>
 
               {viewMode === 'class' ? (
                 /* Class View - Group by Date */
-                <div className="space-y-6">
+                <div className="space-y-4">
                   {Object.entries(groupedAttendance)
                     .sort(([a], [b]) => new Date(b).getTime() - new Date(a).getTime())
-                    .map(([date, records]) => (
-                      <div key={date} className="border border-gray-200 rounded-lg overflow-hidden">
-                        <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
-                          <h4 className="font-semibold text-gray-900">
-                            {formatDate(date)} - {records.length} students
-                          </h4>
+                    .map(([date, records]) => {
+                      const isExpanded = expandedDates.has(date);
+                      return (
+                        <div key={date} className="border border-gray-200 rounded-lg overflow-hidden">
+                          <div 
+                            className="bg-gray-50 px-4 py-3 border-b border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors"
+                            onClick={() => toggleDateExpansion(date)}
+                          >
+                            <div className="flex items-center justify-between">
+                              <h4 className="font-semibold text-gray-900">
+                                {formatDate(date)} - {records.length} students
+                              </h4>
+                              <svg 
+                                className={`w-5 h-5 text-gray-500 transition-transform ${isExpanded ? 'transform rotate-180' : ''}`}
+                                fill="none" 
+                                stroke="currentColor" 
+                                viewBox="0 0 24 24"
+                              >
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                              </svg>
+                            </div>
+                          </div>
+                          
+                          {isExpanded && (
+                            <div className="overflow-x-auto">
+                              <table className="min-w-full divide-y divide-gray-200">
+                                <thead className="bg-gray-50">
+                                  <tr>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                      Student
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                      Status
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                      Notes
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                      Marked At
+                                    </th>
+                                  </tr>
+                                </thead>
+                                <tbody className="bg-white divide-y divide-gray-200">
+                                  {records.map((record) => (
+                                    <tr key={record.id}>
+                                      <td className="px-6 py-4 whitespace-nowrap">
+                                        <div>
+                                          <div className="text-sm font-medium text-gray-900">
+                                            {record.student.student_name}
+                                          </div>
+                                          <div className="text-sm text-gray-500">
+                                            ID: {record.student.student_id}
+                                          </div>
+                                        </div>
+                                      </td>
+                                      <td className="px-6 py-4 whitespace-nowrap">
+                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(record.status)}`}>
+                                          {getStatusIcon(record.status)}
+                                          <span className="ml-1">{record.status.charAt(0).toUpperCase() + record.status.slice(1)}</span>
+                                        </span>
+                                      </td>
+                                      <td className="px-6 py-4">
+                                        <div className="text-sm text-gray-900 max-w-xs truncate">
+                                          {record.notes || '-'}
+                                        </div>
+                                      </td>
+                                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        {formatTime(record.marked_at)}
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          )}
                         </div>
-                        <div className="overflow-x-auto">
-                          <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
-                              <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                  Student
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                  Status
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                  Notes
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                  Marked At
-                                </th>
-                              </tr>
-                            </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
-                              {records.map((record) => (
-                                <tr key={record.id}>
-                                  <td className="px-6 py-4 whitespace-nowrap">
-                                    <div>
-                                      <div className="text-sm font-medium text-gray-900">
-                                        {record.student.student_name}
-                                      </div>
-                                      <div className="text-sm text-gray-500">
-                                        ID: {record.student.student_id}
-                                      </div>
-                                    </div>
-                                  </td>
-                                  <td className="px-6 py-4 whitespace-nowrap">
-                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(record.status)}`}>
-                                      {getStatusIcon(record.status)}
-                                      <span className="ml-1">{record.status.charAt(0).toUpperCase() + record.status.slice(1)}</span>
-                                    </span>
-                                  </td>
-                                  <td className="px-6 py-4">
-                                    <div className="text-sm text-gray-900 max-w-xs truncate">
-                                      {record.notes || '-'}
-                                    </div>
-                                  </td>
-                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {formatTime(record.marked_at)}
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                 </div>
               ) : (
                 /* Student View - Individual History */

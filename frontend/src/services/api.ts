@@ -425,6 +425,22 @@ export const parentApi = {
     });
     return response.data;
   },
+
+  // Get learning activities data for a specific child and year
+  getLearningActivities: async (childId: number, year: string) => {
+    const response = await api.get(`/parent/children/${childId}/learning-activities/`, {
+      params: { year }
+    });
+    return response.data;
+  },
+
+  // Get attendance data for a specific child and year
+  getAttendanceData: async (childId: number, year: string) => {
+    const response = await api.get(`/parent/children/${childId}/attendance/`, {
+      params: { year }
+    });
+    return response.data;
+  },
 };
 
 // Teacher API functions
@@ -467,6 +483,44 @@ export const teacherApi = {
 
   getClassStudents: async (classId: number) => {
     const response = await api.get(`/teacher/classes/${classId}/students/`);
+    return response.data;
+  },
+
+  getClassStudentsWithParents: async (classId: number) => {
+    const response = await api.get(`/teacher/classes/${classId}/students-with-parents/`);
+    return response.data;
+  },
+
+  getMarkedAttendanceDates: async (classId: number) => {
+    const response = await api.get(`/teacher/classes/${classId}/marked-dates/`);
+    return response.data;
+  },
+
+  // Learning Activities
+  recordLearningActivity: async (data: {
+    class_id: number;
+    activity_date: string;
+    activity_type: string;
+    title: string;
+    description?: string;
+    learning_objectives?: string;
+    materials_used?: string;
+    duration_minutes: number;
+    student_records: Array<{
+      student_id: number;
+      participation_level: 'high' | 'medium' | 'low';
+      notes?: string;
+    }>;
+  }) => {
+    const response = await api.post('/teacher/learning-activities/record/', data);
+    return response.data;
+  },
+
+  getTeacherActivities: async (params?: {
+    date?: string;
+    class_id?: number;
+  }) => {
+    const response = await api.get('/teacher/learning-activities/', { params });
     return response.data;
   },
 };

@@ -416,6 +416,8 @@ class LearningActivity(models.Model):
     category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default='other')
     age_group = models.CharField(max_length=50, blank=True)
     duration_minutes = models.PositiveIntegerField(default=30)
+    learning_objectives = models.TextField(blank=True, help_text="Learning goals and objectives for this activity")
+    materials_used = models.TextField(blank=True, help_text="Materials and resources used in this activity")
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

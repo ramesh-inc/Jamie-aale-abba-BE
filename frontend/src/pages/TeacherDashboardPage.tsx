@@ -5,6 +5,9 @@ import DashboardLayout from '../components/layout/DashboardLayout';
 import TeacherSettings from '../components/settings/TeacherSettings';
 import AttendanceMarking from '../components/teacher/AttendanceMarking';
 import AttendanceViewing from '../components/teacher/AttendanceViewing';
+import ActivitiesManagement from '../components/teacher/ActivitiesManagement';
+import MyClasses from '../components/teacher/MyClasses';
+import Students from '../components/teacher/Students';
 
 type TabType = 'home' | 'classes' | 'students' | 'attendance' | 'attendance-view' | 'activities' | 'messages' | 'reports' | 'settings';
 
@@ -154,6 +157,15 @@ const TeacherDashboardPage: React.FC = () => {
       
       case 'attendance-view':
         return <AttendanceViewing />;
+      
+      case 'activities':
+        return <ActivitiesManagement />;
+      
+      case 'classes':
+        return <MyClasses />;
+      
+      case 'students':
+        return <Students />;
       
       case 'settings':
         return <TeacherSettings />;

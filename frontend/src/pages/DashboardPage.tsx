@@ -3,12 +3,16 @@ import { useAuth } from '../utils/auth';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import ParentSettings from '../components/settings/ParentSettings';
 import ChildrenManagement from '../components/parent/ChildrenManagement';
+import DashboardChildrenCards from '../components/parent/DashboardChildrenCards';
+import LearningActivitiesChart from '../components/parent/LearningActivitiesChart';
+import AttendanceChart from '../components/parent/AttendanceChart';
 
 type TabType = 'home' | 'children' | 'activities' | 'messages' | 'attendance' | 'payments' | 'settings';
 
 const DashboardPage: React.FC = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<TabType>('home');
+  const [selectedChildId, setSelectedChildId] = useState<number | null>(null);
 
 
   const renderTabContent = () => {
@@ -16,102 +20,131 @@ const DashboardPage: React.FC = () => {
       case 'home':
         return (
           <div className="space-y-6">
-            {/* User Info Card */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Your Account</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-600">Full Name</label>
-                  <p className="text-gray-800">{user?.first_name} {user?.last_name}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-600">Email</label>
-                  <p className="text-gray-800">{user?.email}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-600">Phone Number</label>
-                  <p className="text-gray-800">{user?.phone_number}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-600">User Type</label>
-                  <p className="text-gray-800 capitalize">{user?.user_type}</p>
-                </div>
+            {/* Welcome Section */}
+            <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                Welcome back, {user?.first_name}!
+              </h2>
+              <p className="text-gray-600">
+                Track your children's learning progress and stay connected with their development.
+              </p>
+            </div>
+
+            {/* Children Cards and Learning Activities Chart */}
+            <div className="grid grid-cols-1 gap-6">
+              {/* Children Cards - Hidden for now */}
+              {/* <div className="lg:col-span-1">
+                <DashboardChildrenCards 
+                  selectedChildId={selectedChildId}
+                  onChildSelect={setSelectedChildId}
+                />
+              </div> */}
+              
+              {/* Learning Activities Chart */}
+              <div className="w-full">
+                <LearningActivitiesChart 
+                  selectedChildId={selectedChildId}
+                  onChildSelect={setSelectedChildId}
+                />
               </div>
             </div>
 
-            {/* Quick Actions */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">My Children</h3>
-                <p className="text-gray-600 mb-4">View and manage your children's profiles</p>
+            {/* Attendance Chart */}
+            <div className="mt-6">
+              <AttendanceChart 
+                selectedChildId={selectedChildId}
+                onChildSelect={setSelectedChildId}
+              />
+            </div>
+
+            {/* Quick Actions Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                    <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-800">My Children</h3>
+                    <p className="text-xs text-gray-600">Manage profiles</p>
+                  </div>
+                </div>
                 <button 
                   onClick={() => setActiveTab('children')}
-                  className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors"
+                  className="w-full mt-3 text-xs bg-green-600 text-white py-2 rounded-md hover:bg-green-700 transition-colors"
                 >
-                  View Children
+                  View All
                 </button>
               </div>
 
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">Messages</h3>
-                <p className="text-gray-600 mb-4">Communicate with teachers and staff</p>
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-800">Messages</h3>
+                    <p className="text-xs text-gray-600">Chat with teachers</p>
+                  </div>
+                </div>
                 <button 
                   onClick={() => setActiveTab('messages')}
-                  className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
+                  className="w-full mt-3 text-xs bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition-colors"
                 >
                   View Messages
                 </button>
               </div>
 
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">Activities</h3>
-                <p className="text-gray-600 mb-4">See your child's daily activities</p>
-                <button 
-                  onClick={() => setActiveTab('activities')}
-                  className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 transition-colors"
-                >
-                  View Activities
-                </button>
-              </div>
-
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">Attendance</h3>
-                <p className="text-gray-600 mb-4">Check your child's attendance record</p>
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+                    <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-800">Attendance</h3>
+                    <p className="text-xs text-gray-600">Daily records</p>
+                  </div>
+                </div>
                 <button 
                   onClick={() => setActiveTab('attendance')}
-                  className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+                  className="w-full mt-3 text-xs bg-indigo-600 text-white py-2 rounded-md hover:bg-indigo-700 transition-colors"
                 >
-                  View Attendance
+                  View Records
                 </button>
               </div>
 
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">Payments</h3>
-                <p className="text-gray-600 mb-4">Manage fees and payment history</p>
-                <button 
-                  onClick={() => setActiveTab('payments')}
-                  className="bg-amber-600 text-white px-4 py-2 rounded-md hover:bg-amber-700 transition-colors"
-                >
-                  View Payments
-                </button>
-              </div>
-
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">Settings</h3>
-                <p className="text-gray-600 mb-4">Update your account information</p>
-                <button 
-                  onClick={() => setActiveTab('settings')}
-                  className="bg-teal-600 text-white px-4 py-2 rounded-md hover:bg-teal-700 transition-colors"
-                >
-                  Open Settings
-                </button>
-              </div>
             </div>
           </div>
         );
       
       case 'children':
         return <ChildrenManagement />;
+
+      case 'activities':
+        return (
+          <div className="space-y-6">
+            <LearningActivitiesChart 
+              selectedChildId={selectedChildId}
+              onChildSelect={setSelectedChildId}
+            />
+          </div>
+        );
+
+      case 'attendance':
+        return (
+          <div className="space-y-6">
+            <AttendanceChart 
+              selectedChildId={selectedChildId}
+              onChildSelect={setSelectedChildId}
+            />
+          </div>
+        );
 
       case 'settings':
         return <ParentSettings />;

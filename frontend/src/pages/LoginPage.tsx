@@ -202,15 +202,17 @@ const LoginPage: React.FC = () => {
                 Forgot your password?
               </button>
             </p>
-            <p className="text-sm text-gray-600">
-              Don't have an account?{' '}
-              <button
-                onClick={() => navigate('/register')}
-                className="text-brand-green font-medium hover:underline"
-              >
-                Sign up here
-              </button>
-            </p>
+            {formData.user_type === 'parent' && (
+              <p className="text-sm text-gray-600">
+                Don't have an account?{' '}
+                <button
+                  onClick={() => navigate('/register')}
+                  className="text-brand-green font-medium hover:underline"
+                >
+                  Sign up here
+                </button>
+              </p>
+            )}
           </div>
         </div>
 

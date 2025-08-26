@@ -1,0 +1,506 @@
+{
+	"info": {
+		"_postman_id": "teacher-learning-activities-collection",
+		"name": "Teacher Learning Activities API",
+		"description": "API collection for testing teacher learning activities recording functionality.\n\nFeatures:\n- Record learning activities for classes\n- Automatic student participation tracking based on attendance\n- Support for different activity categories\n- Comprehensive validation and error handling\n\nPrerequisites:\n- Teacher must be logged in and assigned to the class\n- Students must have attendance marked for the activity date\n- Only students marked as 'present' or 'late' will be included in the activity\n\nActivity Categories: literacy, numeracy, science, art, music, physical, social, other",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{teacher_access_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"exec": [
+					"// Set base URL if not already set",
+					"if (!pm.environment.get(\"base_url\")) {",
+					"    pm.environment.set(\"base_url\", \"http://localhost:8000\");",
+					"}",
+					"",
+					"// Set today's date for activity_date if not set",
+					"if (!pm.environment.get(\"activity_date\")) {",
+					"    const today = new Date().toISOString().split('T')[0];",
+					"    pm.environment.set(\"activity_date\", today);",
+					"}"
+				],
+				"type": "text/javascript"
+			}
+		}
+	],
+	"item": [
+		{
+			"name": "Learning Activities",
+			"item": [
+				{
+					"name": "1. Record Singing Activity",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Activity recorded successfully\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('success');",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"    pm.expect(jsonData).to.have.property('message');",
+									"    pm.expect(jsonData.message).to.include('recorded successfully');",
+									"});",
+									"",
+									"pm.test(\"Response contains activity data\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.have.property('session_id');",
+									"    pm.expect(jsonData.data).to.have.property('activity');",
+									"    pm.expect(jsonData.data).to.have.property('class');",
+									"    pm.expect(jsonData.data).to.have.property('session_details');",
+									"    pm.expect(jsonData.data).to.have.property('participating_students');",
+									"});",
+									"",
+									"pm.test(\"Activity details are correct\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data.activity.name).to.include('Singing');",
+									"    pm.expect(jsonData.data.activity.category).to.eql('music');",
+									"    pm.expect(jsonData.data.session_details.duration_minutes).to.be.a('number');",
+									"});",
+									"",
+									"pm.test(\"Store session ID for further tests\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.data && jsonData.data.session_id) {",
+									"        pm.environment.set('learning_session_id', jsonData.data.session_id.toString());",
+									"        console.log('Stored learning_session_id:', jsonData.data.session_id);",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"class_id\": {{class_id}},\n    \"session_date\": \"{{activity_date}}\",\n    \"activity_name\": \"Singing Activity - Nursery Rhymes\",\n    \"description\": \"Children learned popular nursery rhymes including Twinkle Twinkle Little Star and Row Row Row Your Boat. Focus on rhythm, melody, and group participation.\",\n    \"category\": \"music\",\n    \"start_time\": \"10:00\",\n    \"end_time\": \"10:30\",\n    \"duration_minutes\": 30,\n    \"notes\": \"All participating children showed enthusiasm. Some children were shy initially but joined in by the end.\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/teacher/learning-activities/record/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"teacher",
+								"learning-activities",
+								"record",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "2. Record Art Activity",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Art activity recorded successfully\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"    pm.expect(jsonData.data.activity.category).to.eql('art');",
+									"    pm.expect(jsonData.data.activity.name).to.include('Finger Painting');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"class_id\": {{class_id}},\n    \"session_date\": \"{{activity_date}}\",\n    \"activity_name\": \"Finger Painting - Rainbow Colors\",\n    \"description\": \"Children explored primary and secondary colors through finger painting. Created rainbow patterns and mixed colors.\",\n    \"category\": \"art\",\n    \"start_time\": \"14:00\",\n    \"end_time\": \"14:45\",\n    \"duration_minutes\": 45,\n    \"notes\": \"Great creativity shown. Need to ensure proper cleanup next time. Children loved mixing colors.\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/teacher/learning-activities/record/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"teacher",
+								"learning-activities",
+								"record",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "3. Record Math Activity",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Math activity recorded successfully\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"    pm.expect(jsonData.data.activity.category).to.eql('numeracy');",
+									"    pm.expect(jsonData.data.activity.name).to.include('Counting');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"class_id\": {{class_id}},\n    \"session_date\": \"{{activity_date}}\",\n    \"activity_name\": \"Counting with Blocks\",\n    \"description\": \"Interactive counting session using colorful blocks. Children practiced counting from 1 to 10 and basic addition.\",\n    \"category\": \"numeracy\",\n    \"start_time\": \"11:00\",\n    \"end_time\": \"11:20\",\n    \"notes\": \"Most children can count to 10 confidently. Need more practice with addition concepts.\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/teacher/learning-activities/record/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"teacher",
+								"learning-activities",
+								"record",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "4. Record Physical Activity",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Physical activity with duration calculation\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"    pm.expect(jsonData.data.activity.category).to.eql('physical');",
+									"    pm.expect(jsonData.data.session_details.duration_minutes).to.eql(25);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"class_id\": {{class_id}},\n    \"session_date\": \"{{activity_date}}\",\n    \"activity_name\": \"Outdoor Play Time\",\n    \"description\": \"Structured outdoor play including running games, ball throwing, and balance activities.\",\n    \"category\": \"physical\",\n    \"start_time\": \"15:30\",\n    \"end_time\": \"15:55\",\n    \"notes\": \"Good weather allowed for extended outdoor time. Children enjoyed the balance beam activity most.\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/teacher/learning-activities/record/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"teacher",
+								"learning-activities",
+								"record",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Validation Tests",
+			"item": [
+				{
+					"name": "5. Missing Required Fields (Should Fail)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Error message for missing fields\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('error');",
+									"    pm.expect(jsonData.error).to.include('required');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"class_id\": {{class_id}},\n    \"activity_name\": \"Incomplete Activity\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/teacher/learning-activities/record/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"teacher",
+								"learning-activities",
+								"record",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "6. Invalid Category (Should Fail)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Error message for invalid category\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('error');",
+									"    pm.expect(jsonData.error).to.include('Invalid category');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"class_id\": {{class_id}},\n    \"session_date\": \"{{activity_date}}\",\n    \"activity_name\": \"Invalid Category Test\",\n    \"category\": \"invalid_category\",\n    \"start_time\": \"10:00\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/teacher/learning-activities/record/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"teacher",
+								"learning-activities",
+								"record",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "7. Invalid Date Format (Should Fail)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Error message for invalid date format\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('error');",
+									"    pm.expect(jsonData.error).to.include('Invalid date/time format');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"class_id\": {{class_id}},\n    \"session_date\": \"2023/12/01\",\n    \"activity_name\": \"Date Format Test\",\n    \"start_time\": \"10:00\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/teacher/learning-activities/record/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"teacher",
+								"learning-activities",
+								"record",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "8. Non-Assigned Class (Should Fail)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 403\", function () {",
+									"    pm.response.to.have.status(403);",
+									"});",
+									"",
+									"pm.test(\"Error message for non-assigned class\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('error');",
+									"    pm.expect(jsonData.error).to.include('not assigned');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"class_id\": 99999,\n    \"session_date\": \"{{activity_date}}\",\n    \"activity_name\": \"Unauthorized Class Test\",\n    \"start_time\": \"10:00\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/teacher/learning-activities/record/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"teacher",
+								"learning-activities",
+								"record",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000",
+			"description": "Base URL for the API"
+		},
+		{
+			"key": "teacher_access_token",
+			"value": "",
+			"description": "JWT access token for teacher authentication"
+		},
+		{
+			"key": "class_id",
+			"value": "7",
+			"description": "ID of a class that the teacher is assigned to"
+		},
+		{
+			"key": "activity_date",
+			"value": "",
+			"description": "Date for learning activities (auto-populated to today's date)"
+		},
+		{
+			"key": "learning_session_id",
+			"value": "",
+			"description": "ID of created learning session (auto-populated from first test)"
+		}
+	]
+}

@@ -134,24 +134,14 @@ const ViewChildren: React.FC<ViewChildrenProps> = ({ onAddChild }) => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">My Children</h2>
-          <p className="text-gray-600">
-            {children.length === 0 
-              ? 'No children added yet' 
-              : `You have ${children.length} child${children.length !== 1 ? 'ren' : ''} linked to your account`
-            }
-          </p>
-        </div>
-        {onAddChild && (
-          <button
-            onClick={onAddChild}
-            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
-          >
-            Add Child
-          </button>
-        )}
+      <div className="mb-6">
+        <h2 className="text-3xl font-bold text-gray-900 mb-2">Who's here?</h2>
+        <p className="text-gray-600">
+          {children.length === 0 
+            ? 'Add your first child to get started' 
+            : `${children.length} child${children.length !== 1 ? 'ren' : ''} in your family`
+          }
+        </p>
       </div>
 
       {/* Children Grid */}
@@ -186,72 +176,70 @@ const ViewChildren: React.FC<ViewChildrenProps> = ({ onAddChild }) => {
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {children.map((child) => (
             <div
               key={child.id}
-              className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+              className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-all duration-200 cursor-pointer group"
               onClick={() => handleViewDetails(child.id)}
             >
-              <div className="p-6">
-                {/* Profile Picture */}
-                <div className="flex justify-center mb-4">
-                  <img
-                    src={child.avatar_url || getDefaultAvatar(child.student_name)}
-                    alt={child.student_name}
-                    className="w-20 h-20 rounded-full object-cover"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = getDefaultAvatar(child.student_name);
-                    }}
-                  />
-                </div>
+              {/* Profile Picture */}
+              <div className="flex justify-center mb-4">
+                <img
+                  src={child.avatar_url || getDefaultAvatar(child.student_name)}
+                  alt={child.student_name}
+                  className="w-16 h-16 rounded-full object-cover border-2 border-gray-100 group-hover:border-blue-200 transition-colors"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = getDefaultAvatar(child.student_name);
+                  }}
+                />
+              </div>
 
-                {/* Child Information */}
-                <div className="text-center">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                    {child.student_name}
-                  </h3>
-                  
-                  {child.student_id && (
-                    <p className="text-sm text-gray-500 mb-2">ID: {child.student_id}</p>
-                  )}
-                  
-                  <div className="space-y-1 text-sm text-gray-600">
-                    {child.age !== null && (
-                      <p>Age: {child.age} years old</p>
-                    )}
-                    
-                    <p className="capitalize">Gender: {child.gender}</p>
-                    
-                    {child.relationship_type && (
-                      <p className="capitalize">Relationship: {child.relationship_type}</p>
-                    )}
-                  </div>
-
-                  {/* Class Information */}
-                  <div className="mt-3">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      child.current_class_name !== 'Not Assigned'
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      {child.current_class_name}
-                    </span>
-                  </div>
-                </div>
-
-                {/* View Details Button */}
-                <div className="mt-4 pt-4 border-t border-gray-200">
-                  <button
-                    className="w-full text-sm text-blue-600 hover:text-blue-800 font-medium"
-                    disabled={detailLoading}
-                  >
-                    {detailLoading ? 'Loading...' : 'View Details'}
-                  </button>
-                </div>
+              {/* Child Information */}
+              <div className="text-center space-y-2">
+                <h3 className="text-base font-semibold text-gray-900 truncate">
+                  {child.student_name}
+                </h3>
+                
+                <p className="text-sm text-gray-500">
+                  {child.current_class_name !== 'Not Assigned' 
+                    ? child.current_class_name 
+                    : 'Not enrolled yet'
+                  }
+                </p>
+                
+                {child.age !== null && (
+                  <p className="text-xs text-gray-400">
+                    {child.age} years old
+                  </p>
+                )}
               </div>
             </div>
           ))}
+          
+          {/* Add Child Card */}
+          {onAddChild && (
+            <div
+              className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl shadow-sm border-2 border-dashed border-amber-200 p-6 hover:shadow-md hover:border-amber-300 transition-all duration-200 cursor-pointer group flex flex-col items-center justify-center min-h-[140px]"
+              onClick={onAddChild}
+            >
+              <div className="flex justify-center mb-3">
+                <div className="w-16 h-16 rounded-full bg-amber-200 flex items-center justify-center group-hover:bg-amber-300 transition-colors">
+                  <svg className="w-8 h-8 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                </div>
+              </div>
+              <div className="text-center">
+                <h3 className="text-base font-semibold text-amber-800 mb-1">
+                  Add a Child
+                </h3>
+                <p className="text-sm text-amber-600">
+                  Add your child's profile
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

@@ -7,7 +7,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from django.db.models import Count, Q
-from core.models import Teacher, Class, ClassTeacherAssignment, Student, ClassStudentEnrollment, DailyAttendance
+from core.models import Teacher, Class, ClassTeacherAssignment, Student, ClassStudentEnrollment, DailyAttendance, LearningActivity, ClassLearningSession, StudentLearningRecord, ParentStudentRelationship, Parent
+from .permissions import IsTeacherUser
 from datetime import datetime
 
 
@@ -508,5 +509,491 @@ def get_attendance(request):
     except Exception as e:
         return Response(
             {'error': f'An unexpected error occurred: {str(e)}'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_class_students_with_parents(request, class_id):
+    """
+    GET endpoint to retrieve detailed student information including parent contacts
+    for a specific class. Only accessible by teachers assigned to the class.
+    """
+    try:
+        # Verify user is a teacher
+        if request.user.user_type != 'teacher':
+            return Response(
+                {'error': 'Only teachers can access student information'}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Get teacher profile
+        try:
+            teacher = Teacher.objects.get(user=request.user)
+        except Teacher.DoesNotExist:
+            return Response(
+                {'error': 'Teacher profile not found'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Validate and get class
+        try:
+            class_obj = Class.objects.get(id=class_id, is_active=True)
+        except Class.DoesNotExist:
+            return Response(
+                {'error': 'Class not found'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Check if teacher is assigned to this class
+        teacher_assignment = ClassTeacherAssignment.objects.filter(
+            class_obj=class_obj,
+            teacher=teacher,
+            is_active=True
+        ).first()
+        
+        if not teacher_assignment:
+            return Response(
+                {'error': 'You are not assigned to this class'}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Get all active students enrolled in this class with parent information
+        student_enrollments = ClassStudentEnrollment.objects.filter(
+            class_obj=class_obj,
+            is_active=True
+        ).select_related('student')
+        
+        # Format student data with parent information
+        students_data = []
+        for enrollment in student_enrollments:
+            student = enrollment.student
+            if student.is_active:
+                # Get primary parent contact (first relationship)
+                parent_contact = None
+                parent_relationship = ParentStudentRelationship.objects.filter(
+                    student=student,
+                    parent__is_active=True,
+                    parent__user__is_active=True
+                ).select_related('parent__user').first()
+                
+                if parent_relationship:
+                    parent = parent_relationship.parent
+                    parent_contact = {
+                        'parent_name': f"{parent.user.first_name} {parent.user.last_name}".strip(),
+                        'phone_number': parent.user.phone_number or '',
+                        'email': parent.user.email or '',
+                        'relationship': parent_relationship.get_relationship_type_display()
+                    }
+                
+                students_data.append({
+                    'id': student.id,
+                    'student_name': student.student_name,
+                    'student_id': student.student_id,
+                    'date_of_birth': student.date_of_birth.isoformat() if student.date_of_birth else None,
+                    'gender': student.gender,
+                    'avatar_url': student.avatar_url,
+                    'medical_conditions': student.medical_conditions,
+                    'is_active': student.is_active,
+                    'enrollment_date': enrollment.enrollment_date.isoformat() if enrollment.enrollment_date else None,
+                    'parent_contact': parent_contact,
+                })
+        
+        return Response({
+            'success': True,
+            'data': students_data,
+            'count': len(students_data),
+            'class_info': {
+                'id': class_obj.id,
+                'class_name': class_obj.class_name,
+                'class_code': class_obj.class_code,
+            }
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        import traceback
+        print(f"Error in get_class_students_with_parents: {str(e)}")
+        print(f"Traceback: {traceback.format_exc()}")
+        return Response(
+            {'error': f'An unexpected error occurred: {str(e)}'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_marked_attendance_dates(request, class_id):
+    """
+    GET endpoint to retrieve dates when attendance has already been marked for a specific class.
+    Only accessible by teachers assigned to the class.
+    """
+    try:
+        # Verify user is a teacher
+        if request.user.user_type != 'teacher':
+            return Response(
+                {'error': 'Only teachers can access attendance information'}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Get teacher profile
+        try:
+            teacher = Teacher.objects.get(user=request.user)
+        except Teacher.DoesNotExist:
+            return Response(
+                {'error': 'Teacher profile not found'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Validate and get class
+        try:
+            class_obj = Class.objects.get(id=class_id, is_active=True)
+        except Class.DoesNotExist:
+            return Response(
+                {'error': 'Class not found'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Check if teacher is assigned to this class
+        teacher_assignment = ClassTeacherAssignment.objects.filter(
+            class_obj=class_obj,
+            teacher=teacher,
+            is_active=True
+        ).first()
+        
+        if not teacher_assignment:
+            return Response(
+                {'error': 'You are not assigned to this class'}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Get distinct dates when attendance was marked for this class
+        marked_dates = DailyAttendance.objects.filter(
+            class_obj=class_obj
+        ).values_list('attendance_date', flat=True).distinct().order_by('attendance_date')
+        
+        # Convert dates to string format
+        marked_dates_list = [date.strftime('%Y-%m-%d') for date in marked_dates]
+        
+        response_data = {
+            'success': True,
+            'data': {
+                'class_id': class_obj.id,
+                'class_name': class_obj.class_name,
+                'marked_dates': marked_dates_list
+            },
+            'count': len(marked_dates_list)
+        }
+        
+        return Response(response_data, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        return Response(
+            {'error': f'An unexpected error occurred: {str(e)}'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def record_learning_activity(request):
+    """
+    POST endpoint to record a learning activity session for a class.
+    Expected payload:
+    {
+        "class_id": 1,
+        "session_date": "2023-12-01",
+        "activity_name": "Singing Activity",
+        "description": "Children learned to sing nursery rhymes",
+        "category": "music",
+        "start_time": "10:00",
+        "end_time": "10:30",
+        "duration_minutes": 30,
+        "notes": "All children participated actively"
+    }
+    """
+    try:
+        # Verify user is a teacher
+        if request.user.user_type != 'teacher':
+            return Response(
+                {'error': 'Only teachers can record learning activities'}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Get teacher profile
+        try:
+            teacher = Teacher.objects.get(user=request.user)
+        except Teacher.DoesNotExist:
+            return Response(
+                {'error': 'Teacher profile not found'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Validate request data
+        class_id = request.data.get('class_id')
+        session_date = request.data.get('session_date')
+        activity_name = request.data.get('activity_name')
+        description = request.data.get('description', '')
+        category = request.data.get('category', 'other')
+        start_time = request.data.get('start_time')
+        end_time = request.data.get('end_time')
+        duration_minutes = request.data.get('duration_minutes')
+        notes = request.data.get('notes', '')
+        
+        # Required field validation
+        if not class_id:
+            return Response(
+                {'error': 'class_id is required'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        if not session_date:
+            return Response(
+                {'error': 'session_date is required'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        if not activity_name:
+            return Response(
+                {'error': 'activity_name is required'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Provide default start_time if not provided
+        if not start_time:
+            start_time = "10:00"  # Default start time
+        
+        # Validate and get class
+        try:
+            class_obj = Class.objects.get(id=class_id, is_active=True)
+        except Class.DoesNotExist:
+            return Response(
+                {'error': 'Class not found'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Verify teacher is assigned to this class
+        teacher_assignment = ClassTeacherAssignment.objects.filter(
+            class_obj=class_obj,
+            teacher=teacher,
+            is_active=True
+        ).first()
+        
+        if not teacher_assignment:
+            return Response(
+                {'error': 'You are not assigned to this class'}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Parse and validate dates/times
+        try:
+            from datetime import datetime, time
+            session_date_obj = datetime.strptime(session_date, '%Y-%m-%d').date()
+            start_time_obj = datetime.strptime(start_time, '%H:%M').time()
+            
+            end_time_obj = None
+            if end_time:
+                end_time_obj = datetime.strptime(end_time, '%H:%M').time()
+        except ValueError as ve:
+            return Response(
+                {'error': f'Invalid date/time format: {str(ve)}. Use YYYY-MM-DD for date and HH:MM for time'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Calculate duration if not provided
+        if not duration_minutes and end_time_obj:
+            start_datetime = datetime.combine(session_date_obj, start_time_obj)
+            end_datetime = datetime.combine(session_date_obj, end_time_obj)
+            duration_minutes = int((end_datetime - start_datetime).total_seconds() / 60)
+        elif not duration_minutes:
+            duration_minutes = 30  # Default duration
+        
+        # Validate category
+        valid_categories = [choice[0] for choice in LearningActivity.CATEGORY_CHOICES]
+        if category not in valid_categories:
+            return Response(
+                {'error': f'Invalid category "{category}". Valid options: {", ".join(valid_categories)}'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Create or get learning activity template
+        activity, created = LearningActivity.objects.get_or_create(
+            activity_name=activity_name,
+            category=category,
+            defaults={
+                'description': description,
+                'duration_minutes': duration_minutes,
+                'age_group': class_obj.age_group
+            }
+        )
+        
+        # Get students who attended class on this date (present or late)
+        attended_students = DailyAttendance.objects.filter(
+            class_obj=class_obj,
+            attendance_date=session_date_obj,
+            status__in=['present', 'late']
+        ).select_related('student')
+        
+        attendance_count = attended_students.count()
+        
+        # Create class learning session
+        learning_session = ClassLearningSession.objects.create(
+            class_obj=class_obj,
+            teacher=teacher,
+            activity=activity,
+            session_date=session_date_obj,
+            start_time=start_time_obj,
+            end_time=end_time_obj,
+            duration_minutes=duration_minutes,
+            notes=notes,
+            attendance_count=attendance_count
+        )
+        
+        # Create student learning records for students who attended
+        student_records = []
+        for attendance in attended_students:
+            student_record = StudentLearningRecord.objects.create(
+                student=attendance.student,
+                class_session=learning_session,
+                was_present=True,
+                participation_level='good',  # Default level
+                individual_notes=''
+            )
+            student_records.append(student_record)
+        
+        # Prepare response data
+        response_data = {
+            'success': True,
+            'message': f'Learning activity "{activity_name}" recorded successfully for {attendance_count} students',
+            'data': {
+                'session_id': learning_session.id,
+                'activity': {
+                    'id': activity.id,
+                    'name': activity.activity_name,
+                    'category': activity.category,
+                    'description': activity.description
+                },
+                'class': {
+                    'id': class_obj.id,
+                    'name': class_obj.class_name,
+                    'code': class_obj.class_code
+                },
+                'session_details': {
+                    'date': session_date,
+                    'start_time': start_time,
+                    'end_time': end_time,
+                    'duration_minutes': duration_minutes,
+                    'notes': notes,
+                    'attendance_count': attendance_count
+                },
+                'participating_students': [
+                    {
+                        'student_id': record.student.id,
+                        'student_name': record.student.student_name,
+                        'student_code': record.student.student_id
+                    }
+                    for record in student_records
+                ],
+                'created_at': learning_session.created_at.isoformat()
+            }
+        }
+        
+        return Response(response_data, status=status.HTTP_201_CREATED)
+        
+    except Exception as e:
+        return Response(
+            {'error': f'An unexpected error occurred: {str(e)}'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated, IsTeacherUser])
+def get_teacher_activities(request):
+    """
+    Get learning activities recorded by the authenticated teacher
+    
+    Query Parameters:
+    - date: Filter activities by specific date (YYYY-MM-DD format)
+    - class_id: Filter activities by specific class
+    
+    Returns list of activities with details
+    """
+    try:
+        teacher = request.user.teacher_profile
+        
+        # Get query parameters
+        selected_date = request.GET.get('date')
+        class_id = request.GET.get('class_id')
+        
+        # Base query - get all learning sessions for this teacher
+        query = ClassLearningSession.objects.filter(teacher=teacher).select_related(
+            'activity', 'class_obj'
+        ).prefetch_related('student_records__student')
+        
+        # Apply date filter if provided
+        if selected_date:
+            try:
+                from datetime import datetime
+                date_obj = datetime.strptime(selected_date, '%Y-%m-%d').date()
+                query = query.filter(session_date=date_obj)
+            except ValueError:
+                return Response(
+                    {'error': 'Invalid date format. Use YYYY-MM-DD'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        
+        # Apply class filter if provided
+        if class_id:
+            try:
+                class_id_int = int(class_id)
+                query = query.filter(class_obj_id=class_id_int)
+            except ValueError:
+                return Response(
+                    {'error': 'Invalid class_id format'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        
+        # Order by most recent first
+        learning_sessions = query.order_by('-session_date', '-start_time')
+        
+        # Format the response
+        activities = []
+        for session in learning_sessions:
+            # Get student count for this session
+            student_count = session.student_records.filter(was_present=True).count()
+            
+            # Calculate end time if not provided
+            end_time = session.end_time
+            if not end_time and session.start_time and session.duration_minutes:
+                from datetime import datetime, timedelta
+                start_datetime = datetime.combine(session.session_date, session.start_time)
+                end_datetime = start_datetime + timedelta(minutes=session.duration_minutes)
+                end_time = end_datetime.time()
+            
+            activity_data = {
+                'id': session.id,
+                'activity_date': session.session_date.isoformat(),
+                'activity_type': session.activity.category if session.activity else 'general',
+                'title': session.activity.activity_name if session.activity else 'Learning Session',
+                'description': session.notes or '',
+                'learning_objectives': session.activity.learning_objectives if session.activity else '',
+                'materials_used': session.activity.materials_used if session.activity else '',
+                'duration_minutes': session.duration_minutes or 0,
+                'class_name': session.class_obj.class_name,
+                'class_id': session.class_obj.id,
+                'student_count': student_count,
+                'created_at': session.created_at.isoformat(),
+                'start_time': session.start_time.strftime('%H:%M') if session.start_time else None,
+                'end_time': end_time.strftime('%H:%M') if end_time else None,
+            }
+            
+            activities.append(activity_data)
+        
+        return Response(activities, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        return Response(
+            {'error': f'Failed to retrieve activities: {str(e)}'}, 
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )

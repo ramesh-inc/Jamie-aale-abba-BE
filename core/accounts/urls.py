@@ -36,8 +36,12 @@ from .class_management_views import (
 from .teacher_views import (
     get_teacher_classes,
     get_class_students,
+    get_class_students_with_parents,
     mark_attendance,
     get_attendance,
+    get_marked_attendance_dates,
+    record_learning_activity,
+    get_teacher_activities,
 )
 from .parent_child_views import (
     ParentChildrenListView,
@@ -47,6 +51,8 @@ from .parent_child_views import (
     get_child_summary,
     remove_child_relationship,
     request_class_enrollment,
+    get_child_learning_activities,
+    get_child_attendance_data,
 )
 from .admin_password_change import AdminFirstTimePasswordChangeView
 from .password_reset_views import PasswordResetRequestView, PasswordResetConfirmView, validate_reset_token
@@ -71,10 +77,16 @@ urlpatterns = [
     # Teacher class management endpoints (for /api/v1/teacher/)
     path('teacher/my-classes/', get_teacher_classes, name='get_teacher_classes'),
     path('teacher/classes/<int:class_id>/students/', get_class_students, name='get_class_students'),
+    path('teacher/classes/<int:class_id>/students-with-parents/', get_class_students_with_parents, name='get_class_students_with_parents'),
     
     # Teacher attendance endpoints (for /api/v1/teacher/)
     path('teacher/attendance/mark/', mark_attendance, name='teacher_attendance_mark'),
     path('teacher/attendance/', get_attendance, name='teacher_attendance_get'),
+    path('teacher/classes/<int:class_id>/marked-dates/', get_marked_attendance_dates, name='teacher_marked_attendance_dates'),
+    
+    # Teacher learning activities endpoints (for /api/v1/teacher/)
+    path('teacher/learning-activities/record/', record_learning_activity, name='teacher_record_learning_activity'),
+    path('teacher/learning-activities/', get_teacher_activities, name='teacher_get_activities'),
     
     # Admin self-service endpoints
     path('auth/admin/change-password/', AdminFirstTimePasswordChangeView.as_view(), name='admin_change_password'),
@@ -134,6 +146,8 @@ urlpatterns = [
     path('parent/children/<int:pk>/', ChildDetailView.as_view(), name='parent_child_detail'),
     path('parent/children/<int:child_id>/remove/', remove_child_relationship, name='parent_remove_child'),
     path('parent/children/<int:child_id>/request-enrollment/', request_class_enrollment, name='parent_request_enrollment'),
+    path('parent/children/<int:child_id>/learning-activities/', get_child_learning_activities, name='parent_child_learning_activities'),
+    path('parent/children/<int:child_id>/attendance/', get_child_attendance_data, name='parent_child_attendance'),
     path('parent/children/summary/', get_child_summary, name='parent_child_summary'),
     path('parent/available-classes/', get_available_classes, name='parent_available_classes'),
 ]

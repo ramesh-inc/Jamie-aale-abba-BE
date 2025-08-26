@@ -2,8 +2,9 @@ from rest_framework import generics, status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from django.db.models import Q
-from core.models import Student, Parent, ParentStudentRelationship, Class
+from django.db.models import Q, Sum, Count
+from datetime import datetime, timedelta
+from core.models import Student, Parent, ParentStudentRelationship, Class, StudentLearningRecord, LearningActivity
 from .parent_child_serializers import (
     ChildDetailSerializer, ChildListSerializer, AddChildSerializer,
     UpdateChildSerializer, AvailableClassSerializer
@@ -320,4 +321,262 @@ def request_class_enrollment(request, child_id):
         return Response(
             {'error': f'Failed to submit enrollment request: {str(e)}'},
             status=status.HTTP_400_BAD_REQUEST
+        )
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated, IsParentUser])
+def get_child_learning_activities(request, child_id):
+    """
+    Get learning activities data for a specific child by year
+    Returns monthly aggregated hours of learning activities
+    Parent access only
+    """
+    try:
+        parent = request.user.parent_profile
+        year = request.GET.get('year', str(datetime.now().year))
+        
+        # Verify parent has access to this child
+        relationship = ParentStudentRelationship.objects.filter(
+            parent=parent,
+            student_id=child_id
+        ).first()
+        
+        if not relationship:
+            return Response(
+                {'error': 'Child not found or not linked to your account'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        child = relationship.student
+        
+        try:
+            year_int = int(year)
+            start_date = datetime(year_int, 1, 1)
+            end_date = datetime(year_int, 12, 31, 23, 59, 59)
+        except ValueError:
+            return Response(
+                {'error': 'Invalid year format'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Initialize monthly data
+        months = [
+            'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+            'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+        ]
+        
+        monthly_data = []
+        
+        for month_num in range(1, 13):
+            month_start = datetime(year_int, month_num, 1)
+            if month_num == 12:
+                month_end = datetime(year_int + 1, 1, 1) - timedelta(seconds=1)
+            else:
+                month_end = datetime(year_int, month_num + 1, 1) - timedelta(seconds=1)
+            
+            # Get learning activities for this child in this month
+            learning_records = StudentLearningRecord.objects.filter(
+                student=child,
+                learning_session__activity_date__gte=month_start,
+                learning_session__activity_date__lte=month_end
+            ).aggregate(
+                total_hours=Sum('learning_session__duration_minutes')
+            )
+            
+            total_minutes = learning_records.get('total_hours') or 0
+            total_hours = round(total_minutes / 60, 1) if total_minutes else 0
+            
+            monthly_data.append({
+                'month': months[month_num - 1],
+                'hours': total_hours
+            })
+        
+        return Response(monthly_data, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        return Response(
+            {'error': f'Failed to retrieve learning activities: {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated, IsParentUser])
+def get_child_attendance_data(request, child_id):
+    """
+    Get attendance data for a specific child by year
+    Returns monthly aggregated attendance counts (present, absent, late)
+    Parent access only
+    """
+    try:
+        parent = request.user.parent_profile
+        year = request.GET.get('year', str(datetime.now().year))
+        
+        # Verify parent has access to this child
+        relationship = ParentStudentRelationship.objects.filter(
+            parent=parent,
+            student_id=child_id
+        ).first()
+        
+        if not relationship:
+            return Response(
+                {'error': 'Child not found or not linked to your account'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        child = relationship.student
+        
+        try:
+            year_int = int(year)
+            start_date = datetime(year_int, 1, 1)
+            end_date = datetime(year_int, 12, 31, 23, 59, 59)
+        except ValueError:
+            return Response(
+                {'error': 'Invalid year format'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Initialize monthly data
+        months = [
+            'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+            'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+        ]
+        
+        monthly_data = []
+        
+        for month_num in range(1, 13):
+            month_start = datetime(year_int, month_num, 1)
+            if month_num == 12:
+                month_end = datetime(year_int + 1, 1, 1) - timedelta(seconds=1)
+            else:
+                month_end = datetime(year_int, month_num + 1, 1) - timedelta(seconds=1)
+            
+            # Get attendance records for this child in this month
+            from core.models import DailyAttendance
+            
+            attendance_counts = DailyAttendance.objects.filter(
+                student=child,
+                attendance_date__gte=month_start,
+                attendance_date__lte=month_end
+            ).values('status').annotate(count=Count('id'))
+            
+            # Initialize counts
+            present_count = 0
+            absent_count = 0
+            late_count = 0
+            
+            # Process the counts
+            for record in attendance_counts:
+                if record['status'] == 'present':
+                    present_count = record['count']
+                elif record['status'] == 'absent':
+                    absent_count = record['count']
+                elif record['status'] == 'late':
+                    late_count = record['count']
+            
+            monthly_data.append({
+                'month': months[month_num - 1],
+                'present': present_count,
+                'absent': absent_count,
+                'late': late_count
+            })
+        
+        return Response(monthly_data, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        return Response(
+            {'error': f'Failed to retrieve attendance data: {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated, IsParentUser])
+def get_child_learning_activities(request, child_id):
+    """
+    Get learning activities data for a specific child for a given year.
+    Returns monthly aggregated learning hours based on activities the child participated in.
+    
+    Query Parameters:
+    - year: Academic year (e.g., 2025)
+    
+    Returns monthly data with total learning hours per month.
+    """
+    try:
+        # Get the parent from the authenticated user
+        parent = request.user.parent_profile
+        
+        # Get the child and verify parent relationship
+        try:
+            child = Student.objects.get(
+                id=child_id,
+                parent_relationships__parent=parent,
+                is_active=True
+            )
+        except Student.DoesNotExist:
+            return Response(
+                {'error': 'Child not found or not associated with your account'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Get year from query parameters
+        year = request.GET.get('year', str(datetime.now().year))
+        
+        try:
+            year_int = int(year)
+        except (ValueError, TypeError):
+            return Response(
+                {'error': 'Invalid year format'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Month names for response
+        months = [
+            'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+            'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+        ]
+        
+        monthly_data = []
+        
+        # Import here to avoid circular imports
+        from core.models import ClassLearningSession
+        
+        for month_num in range(1, 13):
+            month_start = datetime(year_int, month_num, 1)
+            if month_num == 12:
+                month_end = datetime(year_int + 1, 1, 1) - timedelta(seconds=1)
+            else:
+                month_end = datetime(year_int, month_num + 1, 1) - timedelta(seconds=1)
+            
+            # Get all learning records for this child in this month
+            # Only include records where the student was present (was_present=True)
+            learning_records = StudentLearningRecord.objects.filter(
+                student=child,
+                class_session__session_date__gte=month_start,
+                class_session__session_date__lte=month_end,
+                was_present=True  # Only count hours for sessions where child was present
+            ).select_related('class_session')
+            
+            # Calculate total hours for the month
+            total_minutes = 0
+            for record in learning_records:
+                # Get duration from the session
+                session_duration = record.class_session.duration_minutes or 0
+                total_minutes += session_duration
+            
+            # Convert minutes to hours (rounded to 1 decimal place)
+            total_hours = round(total_minutes / 60.0, 1) if total_minutes > 0 else 0
+            
+            monthly_data.append({
+                'month': months[month_num - 1],
+                'hours': total_hours
+            })
+        
+        return Response(monthly_data, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        return Response(
+            {'error': f'Failed to retrieve learning activities data: {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
