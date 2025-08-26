@@ -104,9 +104,10 @@ const LoginPage: React.FC = () => {
                 onClick={() => handleUserTypeSelect('teacher')}
                 className={`px-6 py-3 rounded-lg font-medium transition-colors ${
                   formData.user_type === 'teacher'
-                    ? 'bg-blue-600 text-white shadow-md'
+                    ? 'text-white shadow-md'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
+                style={formData.user_type === 'teacher' ? { backgroundColor: '#546848' } : {}}
               >
                 Login as Teacher
               </button>
@@ -137,7 +138,10 @@ const LoginPage: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => handleUserTypeSelect('teacher')}
-                          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                          className="px-4 py-2 text-white rounded-lg transition-colors text-sm font-medium"
+                          style={{ backgroundColor: '#546848' }}
+                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#495c42'}
+                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#546848'}
                         >
                           Login as Teacher
                         </button>
