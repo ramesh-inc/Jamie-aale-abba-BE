@@ -353,7 +353,7 @@ const AttendanceViewing: React.FC = () => {
       </div>
 
       {/* Attendance Records */}
-      {selectedClass && (
+      {selectedClass && (viewMode === 'class' || selectedStudent) && (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200">
           {loading ? (
             <div className="flex justify-center items-center py-12">

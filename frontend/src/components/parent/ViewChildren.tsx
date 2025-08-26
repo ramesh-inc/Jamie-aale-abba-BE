@@ -289,13 +289,13 @@ const ViewChildren: React.FC<ViewChildrenProps> = ({ onAddChild }) => {
                 {/* Basic Information */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Date of Birth</label>
+                    <label className="block text-sm font-semibold text-gray-800 bg-gray-100 px-2 py-1 rounded-sm mb-1">Date of Birth</label>
                     <p className="mt-1 text-sm text-gray-900">
                       {formatDate(selectedChild.date_of_birth)}
                     </p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Gender</label>
+                    <label className="block text-sm font-semibold text-gray-800 bg-gray-100 px-2 py-1 rounded-sm mb-1">Gender</label>
                     <p className="mt-1 text-sm text-gray-900 capitalize">
                       {selectedChild.gender}
                     </p>

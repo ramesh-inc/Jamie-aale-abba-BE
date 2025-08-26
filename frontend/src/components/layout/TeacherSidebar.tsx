@@ -134,18 +134,14 @@ export default function TeacherSidebar({ isOpen, isCollapsed, onClose, onToggleC
         bg-white shadow-lg lg:shadow-none border-r border-gray-200 flex-col transition-all duration-300
       `}>
         {/* Header with Logo */}
-        <div className="flex flex-col items-center px-6 pt-6 pb-4">
+        <div className="flex flex-col items-center px-6 pt-4 pb-2">
           {!isCollapsed && (
             <>
-              <img src={logo} alt="Jamie Aale Abba" className="w-16 h-16 mb-3" />
+              <img src={logo} alt="Jamie Aale Abba" className="w-32 h-32 mb-4" />
               <div className="text-center">
                 <h2 className="text-base font-semibold text-gray-900">Teacher Portal</h2>
-                <p className="text-xs text-gray-500 tracking-wide">JAMIE AALE ABBA</p>
               </div>
             </>
-          )}
-          {isCollapsed && (
-            <img src={logo} alt="Jamie Aale Abba" className="w-8 h-8" />
           )}
           
           {/* Close button for mobile */}

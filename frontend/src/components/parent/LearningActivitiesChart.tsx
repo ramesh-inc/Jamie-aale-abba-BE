@@ -144,9 +144,9 @@ const LearningActivitiesChart: React.FC<LearningActivitiesChartProps> = ({
 
   const handleBarClick = (monthData: LearningActivityData, monthIndex: number) => {
     if (monthData.hours > 0 && selectedChild) {
-      // Calculate the date for the clicked month (use the 1st day of the month)
+      // Calculate the date for the clicked month (use the 15th day of the month for better representation)
       const year = parseInt(selectedYear);
-      const clickedDate = new Date(year, monthIndex, 1).toISOString().split('T')[0];
+      const clickedDate = new Date(year, monthIndex, 15).toISOString().split('T')[0];
       setSelectedDate(clickedDate);
     }
   };
@@ -258,11 +258,16 @@ const LearningActivitiesChart: React.FC<LearningActivitiesChartProps> = ({
                       {/* Bar Container */}
                       <div className="flex items-end justify-center h-full">
                         {/* Learning Hours Bar */}
-                        <div className="relative group">
+                        <div 
+                          className={`relative group w-12 flex justify-center ${
+                            data.hours > 0 ? 'cursor-pointer' : ''
+                          }`}
+                          onClick={() => handleBarClick(data, index)}
+                        >
                           <div
                             className={`w-8 border border-blue-600 transition-colors ${
                               data.hours > 0 
-                                ? 'bg-blue-500 hover:bg-blue-600 cursor-pointer' 
+                                ? 'bg-blue-500 hover:bg-blue-600' 
                                 : 'bg-transparent'
                             }`}
                             style={{
@@ -271,7 +276,6 @@ const LearningActivitiesChart: React.FC<LearningActivitiesChartProps> = ({
                               backgroundColor: data.hours > 0 ? '#3b82f6' : 'transparent'
                             }}
                             title={`${data.month}: ${data.hours} hours${data.hours > 0 ? ' - Click for details' : ''}`}
-                            onClick={() => handleBarClick(data, index)}
                           >
                             {/* Show value on top of bar */}
                             {data.hours > 0 && (
@@ -303,7 +307,7 @@ const LearningActivitiesChart: React.FC<LearningActivitiesChartProps> = ({
             </div>
 
             {/* Summary */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 border-t">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t">
               <div className="text-center">
                 <p className="text-2xl font-bold text-blue-600">
                   {chartData.reduce((sum, data) => sum + data.hours, 0)}
@@ -315,12 +319,6 @@ const LearningActivitiesChart: React.FC<LearningActivitiesChartProps> = ({
                   {Math.round(chartData.reduce((sum, data) => sum + data.hours, 0) / 12)}
                 </p>
                 <p className="text-sm text-gray-600">Avg/Month</p>
-              </div>
-              <div className="text-center">
-                <p className="text-2xl font-bold text-purple-600">
-                  {Math.max(...chartData.map(d => d.hours))}
-                </p>
-                <p className="text-sm text-gray-600">Peak Month</p>
               </div>
               <div className="text-center">
                 <p className="text-2xl font-bold text-orange-600">

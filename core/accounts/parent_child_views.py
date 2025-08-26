@@ -580,3 +580,107 @@ def get_child_learning_activities(request, child_id):
             {'error': f'Failed to retrieve learning activities data: {str(e)}'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated, IsParentUser])
+def get_child_daily_activities(request, child_id):
+    """
+    Get detailed learning activities for a specific child and month
+    Returns list of activities the child participated in during the month containing the specified date
+    Parent access only
+    
+    Query Parameters:
+    - date: Date in YYYY-MM-DD format (required) - will return all activities for that month
+    """
+    try:
+        parent = request.user.parent_profile
+        activity_date = request.GET.get('date')
+        
+        if not activity_date:
+            return Response(
+                {'error': 'Date parameter is required (format: YYYY-MM-DD)'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            date_obj = datetime.strptime(activity_date, '%Y-%m-%d').date()
+        except ValueError:
+            return Response(
+                {'error': 'Invalid date format. Use YYYY-MM-DD'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Verify parent has access to this child
+        relationship = ParentStudentRelationship.objects.filter(
+            parent=parent,
+            student_id=child_id
+        ).first()
+        
+        if not relationship:
+            return Response(
+                {'error': 'Child not found or not linked to your account'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        child = relationship.student
+        
+        # Get all learning sessions for this child on the specified date
+        from core.models import ClassLearningSession, ClassStudentEnrollment
+        
+        # Get the child's current active class enrollment
+        enrollment = ClassStudentEnrollment.objects.filter(
+            student=child,
+            is_active=True
+        ).first()
+        
+        if not enrollment:
+            return Response([], status=status.HTTP_200_OK)
+        
+        # Get all learning sessions for the entire month containing the selected date
+        month_start = date_obj.replace(day=1)
+        if date_obj.month == 12:
+            month_end = date_obj.replace(year=date_obj.year + 1, month=1, day=1) - timedelta(days=1)
+        else:
+            month_end = date_obj.replace(month=date_obj.month + 1, day=1) - timedelta(days=1)
+            
+        learning_sessions = ClassLearningSession.objects.filter(
+            session_date__gte=month_start,
+            session_date__lte=month_end,
+            class_obj=enrollment.class_obj
+        ).select_related('activity', 'teacher', 'teacher__user').order_by('session_date', 'start_time')
+        
+        activities = []
+        for session in learning_sessions:
+            # Check if this child was present for this session by looking at StudentLearningRecord
+            from core.models import StudentLearningRecord
+            
+            student_record = StudentLearningRecord.objects.filter(
+                student=child,
+                class_session=session,
+                was_present=True
+            ).first()
+            
+            if student_record:
+                activities.append({
+                    'id': session.id,
+                    'activity_name': session.activity.activity_name,
+                    'category': session.activity.category,
+                    'session_date': session.session_date.isoformat(),
+                    'start_time': session.start_time.strftime('%H:%M') if session.start_time else None,
+                    'end_time': session.end_time.strftime('%H:%M') if session.end_time else None,
+                    'duration_minutes': session.duration_minutes,
+                    'notes': student_record.individual_notes or session.notes or '',
+                    'teacher_name': f"{session.teacher.user.first_name} {session.teacher.user.last_name}",
+                    'learning_objectives': session.activity.learning_objectives or '',
+                    'materials_used': session.activity.materials_used or '',
+                    'participation_level': student_record.participation_level
+                })
+        
+        return Response(activities, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        return Response(
+            {'error': f'Failed to retrieve daily activities: {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )

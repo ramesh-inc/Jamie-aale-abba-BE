@@ -53,6 +53,7 @@ from .parent_child_views import (
     request_class_enrollment,
     get_child_learning_activities,
     get_child_attendance_data,
+    get_child_daily_activities,
 )
 from .admin_password_change import AdminFirstTimePasswordChangeView
 from .password_reset_views import PasswordResetRequestView, PasswordResetConfirmView, validate_reset_token
@@ -147,6 +148,7 @@ urlpatterns = [
     path('parent/children/<int:child_id>/remove/', remove_child_relationship, name='parent_remove_child'),
     path('parent/children/<int:child_id>/request-enrollment/', request_class_enrollment, name='parent_request_enrollment'),
     path('parent/children/<int:child_id>/learning-activities/', get_child_learning_activities, name='parent_child_learning_activities'),
+    path('parent/children/<int:child_id>/daily-activities/', get_child_daily_activities, name='parent_child_daily_activities'),
     path('parent/children/<int:child_id>/attendance/', get_child_attendance_data, name='parent_child_attendance'),
     path('parent/children/summary/', get_child_summary, name='parent_child_summary'),
     path('parent/available-classes/', get_available_classes, name='parent_available_classes'),

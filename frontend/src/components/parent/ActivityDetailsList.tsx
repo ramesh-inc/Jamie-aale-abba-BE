@@ -28,6 +28,7 @@ const ActivityDetailsList: React.FC<ActivityDetailsListProps> = ({
   const [activities, setActivities] = useState<ActivityDetail[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [collapsedDates, setCollapsedDates] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (selectedDate && childId) {
@@ -40,53 +41,62 @@ const ActivityDetailsList: React.FC<ActivityDetailsListProps> = ({
     setError(null);
 
     try {
-      // For now, we'll use mock data since the detailed endpoint doesn't exist yet
-      // TODO: Replace with actual API call when backend endpoint is ready
+      // Use the new daily activities API endpoint
+      const activities = await parentApi.getDailyActivities(childId, selectedDate!);
       
-      const mockActivities: ActivityDetail[] = [
-        {
-          id: 1,
-          activity_name: "Circle Time - Weather Discussion",
-          category: "literacy",
-          session_date: selectedDate!,
-          start_time: "09:00",
-          end_time: "09:30",
-          duration_minutes: 30,
-          notes: "Child actively participated in weather discussion",
-          teacher_name: "Ms. Sarah Johnson",
-          participation_level: "excellent"
-        },
-        {
-          id: 2,
-          activity_name: "Math Games with Blocks",
-          category: "numeracy",
-          session_date: selectedDate!,
-          start_time: "10:15",
-          end_time: "10:45",
-          duration_minutes: 30,
-          notes: "Great counting skills demonstrated",
-          teacher_name: "Ms. Sarah Johnson",
-          participation_level: "good"
-        },
-        {
-          id: 3,
-          activity_name: "Art - Finger Painting",
-          category: "art",
-          session_date: selectedDate!,
-          start_time: "14:00",
-          end_time: "14:30",
-          duration_minutes: 30,
-          notes: "Creative expression through colors",
-          teacher_name: "Ms. Sarah Johnson",
-          participation_level: "excellent"
-        }
-      ];
-
-      setActivities(mockActivities);
+      // Convert the response to match our interface
+      const formattedActivities: ActivityDetail[] = activities.map((activity: any) => ({
+        id: activity.id,
+        activity_name: activity.activity_name,
+        category: activity.category,
+        session_date: activity.session_date,
+        start_time: activity.start_time || '',
+        end_time: activity.end_time || '',
+        duration_minutes: activity.duration_minutes,
+        notes: activity.notes || '',
+        teacher_name: activity.teacher_name,
+        participation_level: activity.participation_level || 'good'
+      }));
+      
+      setActivities(formattedActivities);
     } catch (error: any) {
       console.error('Error fetching activity details:', error);
-      setError('Failed to load activity details');
-      setActivities([]);
+      
+      // Fallback to sample data for development
+      if (error?.response?.status === 404) {
+        setActivities([]);
+        setError('No activities found for this date');
+      } else {
+        const mockActivities: ActivityDetail[] = [
+          {
+            id: 1,
+            activity_name: "Circle Time - Weather Discussion",
+            category: "literacy",
+            session_date: selectedDate!,
+            start_time: "09:00",
+            end_time: "09:30",
+            duration_minutes: 30,
+            notes: "Child actively participated in weather discussion",
+            teacher_name: "Ms. Sarah Johnson",
+            participation_level: "excellent"
+          },
+          {
+            id: 2,
+            activity_name: "Math Games with Blocks",
+            category: "numeracy",
+            session_date: selectedDate!,
+            start_time: "10:15",
+            end_time: "10:45",
+            duration_minutes: 30,
+            notes: "Great counting skills demonstrated",
+            teacher_name: "Ms. Sarah Johnson",
+            participation_level: "good"
+          }
+        ];
+        
+        setActivities(mockActivities);
+        setError('Using sample data - API connection issue');
+      }
     } finally {
       setLoading(false);
     }
@@ -137,11 +147,11 @@ const ActivityDetailsList: React.FC<ActivityDetailsListProps> = ({
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      weekday: 'long',
+    const date = new Date(dateString);
+    // Since we're showing monthly activities, show the month and year instead of specific date
+    return date.toLocaleDateString('en-US', {
       year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+      month: 'long'
     });
   };
 
@@ -154,7 +164,7 @@ const ActivityDetailsList: React.FC<ActivityDetailsListProps> = ({
         <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-6">
           <div className="flex justify-between items-start">
             <div>
-              <h2 className="text-2xl font-bold mb-2">Daily Activities</h2>
+              <h2 className="text-2xl font-bold mb-2">Learning Activities</h2>
               <p className="text-blue-100">{formatDate(selectedDate)}</p>
             </div>
             <button
@@ -193,79 +203,128 @@ const ActivityDetailsList: React.FC<ActivityDetailsListProps> = ({
             </div>
           ) : (
             <div className="space-y-4">
-              {/* Summary */}
-              <div className="bg-gray-50 rounded-lg p-4 mb-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
-                  <div>
-                    <div className="text-2xl font-bold text-blue-600">
-                      {activities.length}
-                    </div>
-                    <div className="text-sm text-gray-600">Total Activities</div>
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold text-green-600">
-                      {Math.round(activities.reduce((sum, act) => sum + act.duration_minutes, 0) / 60 * 10) / 10}h
-                    </div>
-                    <div className="text-sm text-gray-600">Total Hours</div>
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold text-purple-600">
-                      {activities.filter(act => act.participation_level === 'excellent').length}
-                    </div>
-                    <div className="text-sm text-gray-600">Excellent Participation</div>
-                  </div>
-                </div>
-              </div>
 
-              {/* Activities List */}
-              <div className="space-y-4">
-                {activities.map((activity, index) => (
-                  <div key={activity.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                    <div className="flex justify-between items-start mb-3">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-3 mb-2">
-                          <h3 className="text-lg font-semibold text-gray-900">
-                            {activity.activity_name}
-                          </h3>
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getCategoryColor(activity.category)}`}>
-                            {activity.category.charAt(0).toUpperCase() + activity.category.slice(1)}
-                          </span>
-                        </div>
-                        <div className="flex items-center space-x-4 text-sm text-gray-600 mb-2">
-                          <span className="flex items-center">
-                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            {formatTime(activity.start_time)} - {activity.end_time ? formatTime(activity.end_time) : 'Ongoing'}
-                          </span>
-                          <span className="flex items-center">
-                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                            </svg>
-                            {activity.duration_minutes} minutes
-                          </span>
-                        </div>
-                        <div className="flex items-center space-x-4 text-sm">
-                          <span className="text-gray-600">
-                            Teacher: <span className="font-medium">{activity.teacher_name}</span>
-                          </span>
-                          <span className={`font-medium ${getParticipationColor(activity.participation_level)}`}>
-                            Participation: {activity.participation_level.replace('_', ' ').charAt(0).toUpperCase() + activity.participation_level.replace('_', ' ').slice(1)}
-                          </span>
+              {/* Activities List Grouped by Date */}
+              <div className="space-y-6">
+                {Object.entries(
+                  activities.reduce((groups, activity) => {
+                    const date = activity.session_date;
+                    if (!groups[date]) {
+                      groups[date] = [];
+                    }
+                    groups[date].push(activity);
+                    return groups;
+                  }, {} as Record<string, ActivityDetail[]>)
+                )
+                .sort(([dateA], [dateB]) => new Date(dateB).getTime() - new Date(dateA).getTime())
+                .map(([date, dayActivities]) => {
+                  const isCollapsed = collapsedDates.has(date);
+                  const toggleCollapse = () => {
+                    const newCollapsed = new Set(collapsedDates);
+                    if (isCollapsed) {
+                      newCollapsed.delete(date);
+                    } else {
+                      newCollapsed.add(date);
+                    }
+                    setCollapsedDates(newCollapsed);
+                  };
+
+                  return (
+                    <div key={date} className="border border-gray-200 rounded-lg overflow-hidden">
+                      {/* Date Header */}
+                      <div 
+                        className="bg-blue-50 px-4 py-3 border-b border-blue-200 cursor-pointer hover:bg-blue-100 transition-colors"
+                        onClick={toggleCollapse}
+                      >
+                        <div className="flex items-center justify-between">
+                          <h4 className="font-semibold text-blue-900">
+                            {new Date(date).toLocaleDateString('en-US', {
+                              weekday: 'long',
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric'
+                            })} - {dayActivities.length} {dayActivities.length === 1 ? 'activity' : 'activities'}
+                          </h4>
+                          <svg 
+                            className={`w-5 h-5 text-blue-700 transform transition-transform ${
+                              isCollapsed ? 'rotate-0' : 'rotate-180'
+                            }`} 
+                            fill="none" 
+                            stroke="currentColor" 
+                            viewBox="0 0 24 24"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
                         </div>
                       </div>
+                      
+                      {/* Activities for this date */}
+                      {!isCollapsed && (
+                        <div className="p-4 space-y-4">
+                      {dayActivities.map((activity) => (
+                        <div key={activity.id} className="border border-gray-100 rounded-lg p-4 bg-white hover:shadow-md transition-shadow">
+                          <div className="flex justify-between items-start mb-3">
+                            <div className="flex-1">
+                              <div className="flex items-center space-x-3 mb-2">
+                                <h3 className="text-lg font-semibold text-gray-900">
+                                  {activity.activity_name}
+                                </h3>
+                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getCategoryColor(activity.category)}`}>
+                                  {activity.category.charAt(0).toUpperCase() + activity.category.slice(1)}
+                                </span>
+                              </div>
+                              <div className="flex items-center space-x-4 text-sm text-gray-600 mb-2">
+                                <span className="flex items-center">
+                                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                  </svg>
+                                  {activity.duration_minutes} minutes
+                                </span>
+                              </div>
+                              <div className="flex items-center space-x-4 text-sm">
+                                <span className="text-gray-600">
+                                  Teacher: <span className="font-medium">{activity.teacher_name}</span>
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {/* Learning Objectives */}
+                          {activity.learning_objectives && (
+                            <div className="mt-3 p-3 bg-green-50 rounded-lg">
+                              <p className="text-sm text-gray-700">
+                                <span className="font-medium text-green-800">Learning Objectives: </span>
+                                {activity.learning_objectives}
+                              </p>
+                            </div>
+                          )}
+                          
+                          {/* Materials Used */}
+                          {activity.materials_used && (
+                            <div className="mt-3 p-3 bg-yellow-50 rounded-lg">
+                              <p className="text-sm text-gray-700">
+                                <span className="font-medium text-yellow-800">Materials Used: </span>
+                                {activity.materials_used}
+                              </p>
+                            </div>
+                          )}
+                          
+                          {/* Notes */}
+                          {activity.notes && (
+                            <div className="mt-3 p-3 bg-blue-50 rounded-lg">
+                              <p className="text-sm text-gray-700">
+                                <span className="font-medium text-blue-800">Notes: </span>
+                                {activity.notes}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                        </div>
+                      )}
                     </div>
-                    
-                    {activity.notes && (
-                      <div className="mt-3 p-3 bg-blue-50 rounded-lg">
-                        <p className="text-sm text-gray-700">
-                          <span className="font-medium text-blue-800">Notes: </span>
-                          {activity.notes}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}

@@ -1,5 +1,6 @@
 import React from 'react';
 import { AuthTokenManager } from '../../utils/auth';
+import logo from '../../assets/logo.png';
 
 interface MenuItem {
   id: string;
@@ -137,6 +138,14 @@ export default function Sidebar({ isOpen, isCollapsed, onClose, onToggleCollapse
 
   return (
     <>
+      {/* Mobile Overlay */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          onClick={onClose}
+        />
+      )}
+
       {/* Sidebar */}
       <div className={`
         ${isOpen ? 'fixed inset-y-0 left-0 z-50 lg:relative lg:inset-auto' : 'hidden lg:flex'}
@@ -144,33 +153,21 @@ export default function Sidebar({ isOpen, isCollapsed, onClose, onToggleCollapse
         ${isOpen ? 'w-64' : ''}
         bg-white shadow-lg lg:shadow-none border-r border-gray-200 flex-col transition-all duration-300
       `}>
-        {/* Mobile Overlay */}
-        {isOpen && (
-          <div
-            className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
-            onClick={onClose}
-          />
-        )}
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 h-16 border-b border-gray-200">
-          <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3'}`}>
-            <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-              <svg className="w-6 h-6 text-green-600" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2L2 7v10c0 5.55 3.84 9.739 9 11 5.16-1.261 9-5.45 9-11V7l-10-5z"/>
-              </svg>
-            </div>
-            {!isCollapsed && (
-              <div>
-                <h2 className="text-sm font-semibold text-gray-900">JAMIE AALE ABBA</h2>
-                <p className="text-xs text-gray-500">Est. 2019</p>
+        {/* Header with Logo */}
+        <div className="flex flex-col items-center px-6 pt-4 pb-2">
+          {!isCollapsed && (
+            <>
+              <img src={logo} alt="Jamie Aale Abba" className="w-32 h-32 mb-4" />
+              <div className="text-center">
+                <h2 className="text-base font-semibold text-gray-900">Admin Portal</h2>
               </div>
-            )}
-          </div>
+            </>
+          )}
           
           {/* Close button for mobile */}
           <button
             onClick={onClose}
-            className="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+            className="lg:hidden absolute top-4 right-4 p-2 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -179,46 +176,46 @@ export default function Sidebar({ isOpen, isCollapsed, onClose, onToggleCollapse
         </div>
 
         {/* Navigation Menu */}
-        <nav className="flex-1 px-4 py-6 space-y-2">
+        <nav className="flex-1 px-4 py-6 space-y-1">
           {visibleMenuItems.map((item) => (
             <button
               key={item.id}
               onClick={item.onClick}
               className={`
                 w-full flex items-center rounded-lg text-left transition-colors
-                ${isCollapsed ? 'justify-center px-3 py-3' : 'space-x-3 px-3 py-2.5'}
+                ${isCollapsed ? 'justify-center px-3 py-3' : 'space-x-3 px-4 py-3'}
                 ${activeItem === item.id
-                  ? 'bg-green-100 text-green-800 font-medium'
-                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                  ? 'bg-blue-50 text-blue-700 border-r-3 border-blue-700'
+                  : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
                 }
               `}
               title={isCollapsed ? item.label : undefined}
             >
-              <span className={`flex-shrink-0 ${activeItem === item.id ? 'text-green-600' : ''}`}>
+              <span className={`flex-shrink-0 ${activeItem === item.id ? 'text-blue-600' : 'text-gray-500'}`}>
                 {item.icon}
               </span>
               {!isCollapsed && (
-                <span className="text-sm">{item.label}</span>
+                <span className="text-sm font-medium">{item.label}</span>
               )}
             </button>
           ))}
         </nav>
 
         {/* User Info & Logout */}
-        <div className="border-t border-gray-200 p-4">
+        <div className="border-t border-gray-100 p-4">
           {!isCollapsed && (
-            <div className="flex items-center space-x-3 mb-3">
-              <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-                <span className="text-white text-sm font-medium">
-                  {user?.first_name?.charAt(0) || 'U'}
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                <span className="text-white text-sm font-semibold">
+                  {user?.first_name?.charAt(0) || 'A'}
                 </span>
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-900 truncate">
-                  {user?.full_name}
+                  {user?.first_name} {user?.last_name}
                 </p>
                 <p className="text-xs text-gray-500 capitalize">
-                  {user?.admin_profile?.admin_level || user?.user_type}
+                  {user?.admin_profile?.admin_level?.replace('_', ' ') || 'Admin'}
                 </p>
               </div>
             </div>
@@ -228,14 +225,14 @@ export default function Sidebar({ isOpen, isCollapsed, onClose, onToggleCollapse
             onClick={onLogout}
             className={`
               w-full flex items-center rounded-lg text-gray-600 hover:bg-red-50 hover:text-red-700 transition-colors
-              ${isCollapsed ? 'justify-center px-3 py-3' : 'space-x-3 px-3 py-2'}
+              ${isCollapsed ? 'justify-center px-3 py-3' : 'space-x-3 px-4 py-2'}
             `}
             title={isCollapsed ? 'Logout' : undefined}
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
             </svg>
-            {!isCollapsed && <span className="text-sm">Logout</span>}
+            {!isCollapsed && <span className="text-sm font-medium">Logout</span>}
           </button>
         </div>
       </div>

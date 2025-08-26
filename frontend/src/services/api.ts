@@ -433,6 +433,13 @@ export const parentApi = {
     });
     return response.data;
   },
+  // Get detailed daily activities for a specific child and date
+  getDailyActivities: async (childId: number, date: string) => {
+    const response = await api.get(`/parent/children/${childId}/daily-activities/`, {
+      params: { date }
+    });
+    return response.data;
+  },
 
   // Get attendance data for a specific child and year
   getAttendanceData: async (childId: number, year: string) => {
