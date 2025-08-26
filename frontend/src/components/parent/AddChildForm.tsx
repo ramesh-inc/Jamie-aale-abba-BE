@@ -160,8 +160,8 @@ const AddChildForm: React.FC<AddChildFormProps> = ({ onSuccess, onCancel }) => {
       </div>
 
       {successMessage && (
-        <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-md">
-          <p className="text-green-600 text-sm">{successMessage}</p>
+        <div className="mb-4 p-4 rounded-md border" style={{ backgroundColor: '#f0f4f0', borderColor: '#546848' }}>
+          <p className="text-sm" style={{ color: '#546848' }}>{successMessage}</p>
         </div>
       )}
 

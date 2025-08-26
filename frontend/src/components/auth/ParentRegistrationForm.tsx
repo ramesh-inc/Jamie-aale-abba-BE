@@ -5,6 +5,7 @@ import { parentRegistrationSchema } from '../../utils/validation';
 import { authApi } from '../../services/api';
 import LoadingSpinner from '../ui/LoadingSpinner';
 import type { ParentRegistrationData } from '../../types/auth';
+import logo from '../../assets/logo.png';
 
 interface ParentRegistrationFormProps {
   onSuccess?: (email: string) => void;
@@ -104,8 +105,15 @@ export const ParentRegistrationForm: React.FC<ParentRegistrationFormProps> = ({
 
 
   return (
-    <div className="max-w-md mx-auto bg-white p-8 rounded-lg shadow-lg">
+    <div className="max-w-md mx-auto p-8">
       <div className="text-center mb-8">
+        <div className="flex justify-center mb-6">
+          <img 
+            src={logo} 
+            alt="Jamie Aale Abba Logo" 
+            className="w-24 h-24 object-contain"
+          />
+        </div>
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
           Create Parent Account
         </h1>

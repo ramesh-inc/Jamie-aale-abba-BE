@@ -61,8 +61,8 @@ const DashboardPage: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow">
                 <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                    <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#546848', opacity: 0.1 }}>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: '#546848' }}>
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
                     </svg>
                   </div>
@@ -73,7 +73,10 @@ const DashboardPage: React.FC = () => {
                 </div>
                 <button 
                   onClick={() => setActiveTab('children')}
-                  className="w-full mt-3 text-xs bg-green-600 text-white py-2 rounded-md hover:bg-green-700 transition-colors"
+                  className="w-full mt-3 text-xs text-white py-2 rounded-md transition-colors"
+                  style={{ backgroundColor: '#546848' }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#495c42'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#546848'}
                 >
                   View All
                 </button>

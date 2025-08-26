@@ -4,6 +4,7 @@ import { loginUser } from '../services/api';
 import type { LoginData, LoginResponse } from '../types/auth';
 import FormField from '../components/ui/FormField';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
+import groupImage from '../assets/page_images/groupImage.png';
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
@@ -79,18 +80,21 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-yellow-50 flex items-center justify-center p-4">
-      <div className="max-w-md w-full">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="w-20 h-20 bg-gradient-to-r rounded-full mx-auto mb-4 flex items-center justify-center">
-            <img src="/src/assets/logo.png" alt="ClassDojo Nursery" className="w-24 h-24" />
+    <div className="min-h-screen bg-brand-light-gray flex items-center justify-center p-4">
+      {/* Main Container - White Background */}
+      <div className="bg-white rounded-lg shadow-xl flex max-w-6xl w-full overflow-hidden">
+        {/* Left Side - Form */}
+        <div className="flex-1 flex flex-col items-center justify-center px-6 py-8">
+          {/* Header */}
+          <div className="text-center mb-8 max-w-md w-full">
+            <div className="w-20 h-20 bg-gradient-to-r rounded-full mx-auto mb-4 flex items-center justify-center">
+              <img src="/src/assets/logo.png" alt="ClassDojo Nursery" className="w-24 h-24" />
+            </div>
+            <h1 className="text-2xl font-bold text-gray-800 mb-2">Login to your account</h1>
           </div>
-          <h1 className="text-2xl font-bold text-gray-800 mb-2">Login to your account</h1>
-        </div>
 
-        {/* Login Form */}
-        <div className="bg-white rounded-xl shadow-lg p-8">
+          {/* Login Form */}
+          <div className="bg-white p-8 max-w-md w-full">
           {/* User Type Selection Buttons */}
           <div className="mb-6">
             <p className="text-gray-700 text-center mb-4 font-medium">Select your account type:</p>
@@ -111,9 +115,10 @@ const LoginPage: React.FC = () => {
                 onClick={() => handleUserTypeSelect('parent')}
                 className={`px-6 py-3 rounded-lg font-medium transition-colors ${
                   formData.user_type === 'parent'
-                    ? 'bg-green-600 text-white shadow-md'
+                    ? 'text-white shadow-md'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
+                style={formData.user_type === 'parent' ? { backgroundColor: '#546848' } : {}}
               >
                 Login as Parent
               </button>
@@ -141,7 +146,10 @@ const LoginPage: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => handleUserTypeSelect('parent')}
-                          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
+                          className="px-4 py-2 text-white rounded-lg transition-colors text-sm font-medium"
+                          style={{ backgroundColor: '#546848' }}
+                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#495c42'}
+                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#546848'}
                         >
                           Login as Parent
                         </button>
@@ -179,7 +187,8 @@ const LoginPage: React.FC = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-gradient-to-r from-brand-green to-brand-gold text-white py-3 px-4 rounded-lg font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              className="w-full text-white py-3 px-4 rounded-lg font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              style={{ backgroundColor: '#BFA258' }}
             >
               {isLoading ? (
                 <>
@@ -207,23 +216,34 @@ const LoginPage: React.FC = () => {
                 Don't have an account?{' '}
                 <button
                   onClick={() => navigate('/register')}
-                  className="text-brand-green font-medium hover:underline"
+                  className="font-medium hover:underline"
+                  style={{ color: '#546848' }}
                 >
                   Sign up here
                 </button>
               </p>
             )}
           </div>
+          </div>
+
+          {/* Help Text */}
+          <div className="mt-8 text-center max-w-md w-full">
+            <p className="text-sm text-gray-500">
+              Need help? Contact us at{' '}
+              <a href="mailto:support@classdojo-nursery.com" className="hover:underline" style={{ color: '#546848' }}>
+                support@classdojo-nursery.com
+              </a>
+            </p>
+          </div>
         </div>
 
-        {/* Help Text */}
-        <div className="mt-8 text-center">
-          <p className="text-sm text-gray-500">
-            Need help? Contact us at{' '}
-            <a href="mailto:support@classdojo-nursery.com" className="text-brand-green hover:underline">
-              support@classdojo-nursery.com
-            </a>
-          </p>
+        {/* Right Side - Group Image */}
+        <div className="hidden lg:flex flex-1 items-center justify-center p-6">
+          <img 
+            src={groupImage} 
+            alt="Jamie Aale Abba School Group" 
+            className="max-w-full max-h-full object-contain rounded-lg"
+          />
         </div>
       </div>
     </div>
