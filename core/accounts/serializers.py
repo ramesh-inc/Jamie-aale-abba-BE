@@ -418,6 +418,9 @@ class AdminRegistrationSerializer(serializers.ModelSerializer):
         
         with transaction.atomic():
             # Create admin user (active by default - no email verification needed)
+            # Set is_superuser=True for super_admin level
+            is_super = admin_level == 'super_admin'
+            
             user = User.objects.create_user(
                 username=validated_data['email'],
                 email=validated_data['email'],
@@ -429,6 +432,7 @@ class AdminRegistrationSerializer(serializers.ModelSerializer):
                 is_active=True,
                 is_email_verified=True,
                 is_staff=True,  # Admins are staff by default
+                is_superuser=is_super,  # Set superuser status for super_admin level
                 must_change_password=True  # Force password change on first login
             )
             

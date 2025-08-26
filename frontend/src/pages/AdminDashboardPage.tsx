@@ -367,6 +367,9 @@ export default function AdminDashboardPage() {
         adminApi.getTeachers(),
       ]);
 
+      // Filter admins for Manage Admins section:
+      // - Show all admins (active and inactive) for management purposes
+      // - This allows admins to see who has been deactivated
       setAdmins(adminResponse.admins);
       
       // Filter teachers for Manage Teachers section:
@@ -377,13 +380,14 @@ export default function AdminDashboardPage() {
       );
       setTeachers(visibleTeachers);
       
-      // Count only fully active teachers for stats (both user and profile active)
+      // Count only active admins and teachers for stats
+      const activeAdminsCount = adminResponse.admins.filter(admin => admin.is_active).length;
       const activeTeachersCount = teacherResponse.teachers.filter(teacher => 
         teacher.is_active && teacher.teacher_profile?.is_active
       ).length;
       
       setAdminStats({
-        admins: adminResponse.count,
+        admins: activeAdminsCount,
         teachers: activeTeachersCount,
       });
     } catch (error) {
@@ -442,6 +446,41 @@ export default function AdminDashboardPage() {
       } catch (error) {
         console.error('Error deleting teacher:', error);
         showNotification('Failed to delete teacher. Please try again.', 'error');
+      }
+    });
+    setShowConfirmModal(true);
+  };
+
+  const handleDeleteAdmin = (adminId: number) => {
+    const admin = admins.find(a => a.id === adminId);
+    const adminName = admin ? admin.full_name : 'this administrator';
+    
+    // Check if trying to delete super admin or self
+    if (admin?.is_superuser || admin?.admin_profile?.admin_level === 'super_admin') {
+      showNotification('Cannot delete super administrator accounts.', 'error');
+      return;
+    }
+    
+    if (admin?.id === user?.id) {
+      showNotification('Cannot delete your own account.', 'error');
+      return;
+    }
+    
+    setConfirmMessage(`Are you sure you want to delete "${adminName}"? This will deactivate their account and they will no longer be able to access the system.`);
+    setConfirmAction(() => async () => {
+      try {
+        await adminApi.deleteAdmin(adminId);
+        loadStats(); // Refresh the data
+        showNotification(`Administrator "${adminName}" has been successfully deleted.`, 'success');
+        
+        // Force a page refresh to ensure all components get updated data
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000); // Give time for the success message to be seen
+      } catch (error: any) {
+        console.error('Error deleting admin:', error);
+        const errorMessage = error.response?.data?.error || 'Failed to delete administrator. Please try again.';
+        showNotification(errorMessage, 'error');
       }
     });
     setShowConfirmModal(true);
@@ -619,6 +658,9 @@ export default function AdminDashboardPage() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Status
                     </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -643,6 +685,36 @@ export default function AdminDashboardPage() {
                         }`}>
                           {admin.is_active ? 'Active' : 'Inactive'}
                         </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        {/* Only show delete button for non-super admins and not for self */}
+                        {!admin.is_superuser && 
+                         admin.admin_profile?.admin_level !== 'super_admin' && 
+                         admin.id !== user?.id && 
+                         admin.is_active && (
+                          <button 
+                            onClick={() => handleDeleteAdmin(admin.id)}
+                            className="text-red-600 hover:text-red-900"
+                            title="Deactivate admin account"
+                          >
+                            Delete
+                          </button>
+                        )}
+                        {/* Show disabled state for super admins or self */}
+                        {(admin.is_superuser || 
+                          admin.admin_profile?.admin_level === 'super_admin' || 
+                          admin.id === user?.id || 
+                          !admin.is_active) && (
+                          <span className="text-gray-400 cursor-not-allowed" title={
+                            admin.is_superuser || admin.admin_profile?.admin_level === 'super_admin' 
+                              ? 'Cannot delete super admin' 
+                              : admin.id === user?.id 
+                              ? 'Cannot delete your own account' 
+                              : 'Account already inactive'
+                          }>
+                            Delete
+                          </span>
+                        )}
                       </td>
                     </tr>
                   ))}

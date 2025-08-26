@@ -84,14 +84,47 @@ export default function AdminRegistrationForm({ onSuccess, onCancel }: AdminRegi
       console.error('Admin registration failed:', error);
       
       if (error.response?.data) {
-        const errorData = error.response.data as ApiError;
+        const errorData = error.response.data;
         
-        // Handle field-specific errors
+        // Handle various error response structures
         if (errorData.errors) {
+          // Field-specific errors (object format)
           const firstError = Object.values(errorData.errors)[0]?.[0];
           setSubmitError(firstError || 'Registration failed. Please check your information.');
+        } else if (errorData.password) {
+          // Password-specific errors (array format)
+          const passwordError = Array.isArray(errorData.password) ? errorData.password[0] : errorData.password;
+          setSubmitError(passwordError);
+        } else if (errorData.non_field_errors) {
+          // Non-field errors (array format)
+          const nonFieldError = Array.isArray(errorData.non_field_errors) ? errorData.non_field_errors[0] : errorData.non_field_errors;
+          setSubmitError(nonFieldError);
+        } else if (errorData.error) {
+          // General error field (string format)
+          setSubmitError(errorData.error);
+        } else if (errorData.message) {
+          // Message field (string format)
+          setSubmitError(errorData.message);
+        } else if (typeof errorData === 'string') {
+          // Direct string error
+          setSubmitError(errorData);
         } else {
-          setSubmitError(errorData.message || 'Registration failed. Please try again.');
+          // Fallback: try to extract any error from the object
+          const allKeys = Object.keys(errorData);
+          let errorMessage = 'Registration failed. Please try again.';
+          
+          for (const key of allKeys) {
+            const value = errorData[key];
+            if (Array.isArray(value) && value.length > 0) {
+              errorMessage = value[0];
+              break;
+            } else if (typeof value === 'string') {
+              errorMessage = value;
+              break;
+            }
+          }
+          
+          setSubmitError(errorMessage);
         }
       } else {
         setSubmitError('Network error. Please check your connection and try again.');
