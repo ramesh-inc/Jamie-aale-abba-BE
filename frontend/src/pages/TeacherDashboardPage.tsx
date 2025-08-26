@@ -8,6 +8,7 @@ import AttendanceViewing from '../components/teacher/AttendanceViewing';
 import ActivitiesManagement from '../components/teacher/ActivitiesManagement';
 import MyClasses from '../components/teacher/MyClasses';
 import Students from '../components/teacher/Students';
+import Reports from '../components/teacher/Reports';
 
 type TabType = 'home' | 'classes' | 'students' | 'attendance' | 'attendance-view' | 'activities' | 'messages' | 'reports' | 'settings';
 
@@ -169,6 +170,9 @@ const TeacherDashboardPage: React.FC = () => {
       
       case 'settings':
         return <TeacherSettings />;
+      
+      case 'reports':
+        return <Reports />;
 
       default:
         return (

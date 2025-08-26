@@ -530,6 +530,21 @@ export const teacherApi = {
     const response = await api.get('/teacher/learning-activities/', { params });
     return response.data;
   },
+
+  // Teacher student reports endpoints
+  getStudentLearningActivities: async (studentId: number, year: string) => {
+    const response = await api.get(`/teacher/students/${studentId}/learning-activities/`, {
+      params: { year }
+    });
+    return response.data;
+  },
+
+  getStudentAttendanceData: async (studentId: number, year: string) => {
+    const response = await api.get(`/teacher/students/${studentId}/attendance/`, {
+      params: { year }
+    });
+    return response.data;
+  },
 };
 
 // Convenience exports

@@ -997,3 +997,209 @@ def get_teacher_activities(request):
             {'error': f'Failed to retrieve activities: {str(e)}'}, 
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_student_learning_activities(request, student_id):
+    """
+    GET endpoint for teachers to retrieve learning activities data for a specific student.
+    Returns monthly aggregated data similar to parent endpoint but with teacher access controls.
+    """
+    try:
+        from django.db.models import Sum
+        from datetime import datetime, date
+        from calendar import monthrange
+        import calendar
+        
+        # Get teacher profile
+        try:
+            teacher = Teacher.objects.get(user=request.user)
+        except Teacher.DoesNotExist:
+            return Response(
+                {'error': 'Teacher profile not found'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Get the student
+        try:
+            student = Student.objects.get(id=student_id, is_active=True)
+        except Student.DoesNotExist:
+            return Response(
+                {'error': 'Student not found'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Check if teacher has access to this student (through class assignment)
+        student_enrollment = ClassStudentEnrollment.objects.filter(
+            student=student,
+            is_active=True
+        ).first()
+        
+        if not student_enrollment:
+            return Response(
+                {'error': 'Student is not enrolled in any active class'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Check if teacher is assigned to the student's class
+        teacher_assignment = ClassTeacherAssignment.objects.filter(
+            teacher=teacher,
+            class_obj=student_enrollment.class_obj,
+            is_active=True
+        ).first()
+        
+        if not teacher_assignment:
+            return Response(
+                {'error': 'You do not have access to this student'}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Get year parameter
+        year = request.GET.get('year', str(date.today().year))
+        try:
+            year_int = int(year)
+        except ValueError:
+            return Response(
+                {'error': 'Invalid year format'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Get learning activities for this student for the specified year
+        learning_records = StudentLearningRecord.objects.filter(
+            student=student,
+            class_session__session_date__year=year_int,
+            class_session__class_obj=student_enrollment.class_obj
+        ).select_related('class_session', 'class_session__activity')
+        
+        # Aggregate by month
+        monthly_data = []
+        for month in range(1, 13):
+            month_records = learning_records.filter(
+                class_session__session_date__month=month
+            )
+            
+            # Calculate total hours for the month
+            total_minutes = month_records.aggregate(
+                total=Sum('class_session__duration_minutes')
+            )['total'] or 0
+            
+            total_hours = round(total_minutes / 60, 1)
+            
+            monthly_data.append({
+                'month': calendar.month_abbr[month],
+                'hours': total_hours
+            })
+        
+        return Response(monthly_data, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        return Response(
+            {'error': f'Failed to retrieve learning activities: {str(e)}'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_student_attendance_data(request, student_id):
+    """
+    GET endpoint for teachers to retrieve attendance data for a specific student.
+    Returns monthly aggregated data similar to parent endpoint but with teacher access controls.
+    """
+    try:
+        from datetime import datetime, date
+        import calendar
+        
+        # Get teacher profile
+        try:
+            teacher = Teacher.objects.get(user=request.user)
+        except Teacher.DoesNotExist:
+            return Response(
+                {'error': 'Teacher profile not found'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Get the student
+        try:
+            student = Student.objects.get(id=student_id, is_active=True)
+        except Student.DoesNotExist:
+            return Response(
+                {'error': 'Student not found'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Check if teacher has access to this student (through class assignment)
+        student_enrollment = ClassStudentEnrollment.objects.filter(
+            student=student,
+            is_active=True
+        ).first()
+        
+        if not student_enrollment:
+            return Response(
+                {'error': 'Student is not enrolled in any active class'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Check if teacher is assigned to the student's class
+        teacher_assignment = ClassTeacherAssignment.objects.filter(
+            teacher=teacher,
+            class_obj=student_enrollment.class_obj,
+            is_active=True
+        ).first()
+        
+        if not teacher_assignment:
+            return Response(
+                {'error': 'You do not have access to this student'}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Get year parameter
+        year = request.GET.get('year', str(date.today().year))
+        try:
+            year_int = int(year)
+        except ValueError:
+            return Response(
+                {'error': 'Invalid year format'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Get attendance records for this student for the specified year
+        attendance_records = DailyAttendance.objects.filter(
+            student=student,
+            attendance_date__year=year_int,
+            class_obj=student_enrollment.class_obj
+        )
+        
+        # Aggregate by month
+        monthly_data = []
+        for month in range(1, 13):
+            month_records = attendance_records.filter(
+                attendance_date__month=month
+            )
+            
+            total_days = month_records.count()
+            present_days = month_records.filter(status='present').count()
+            late_days = month_records.filter(status='late').count()
+            absent_days = month_records.filter(status='absent').count()
+            
+            # Calculate attendance rate (present + late = attended)
+            attended_days = present_days + late_days
+            attendance_rate = round((attended_days / total_days * 100), 1) if total_days > 0 else 0
+            
+            monthly_data.append({
+                'month': calendar.month_abbr[month],
+                'total_days': total_days,
+                'present_days': present_days,
+                'late_days': late_days,
+                'absent_days': absent_days,
+                'attendance_rate': attendance_rate
+            })
+        
+        return Response(monthly_data, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        return Response(
+            {'error': f'Failed to retrieve attendance data: {str(e)}'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
