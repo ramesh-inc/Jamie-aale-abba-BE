@@ -1,0 +1,650 @@
+{
+	"info": {
+		"_postman_id": "teacher-class-students-with-parents-collection",
+		"name": "Teacher - Class Students with Parent Info",
+		"description": "Collection for teacher to get detailed student information including parent contact details:\n\n1. GET /teacher/classes/{class_id}/students-with-parents/ - Get all students in a class with their parent information\n\nThis endpoint provides comprehensive student data including:\n- Student basic information (name, age, etc.)\n- Parent contact details (name, email, phone)\n- Enrollment status and dates\n- Family relationship information\n\nUseful for:\n- Parent-teacher communication\n- Emergency contact information\n- Family engagement activities\n- Student-parent relationship tracking\n\nPrerequisites:\n- Teacher must be logged in\n- Set environment variables: teacher_access_token, class_id\n- Teacher must be assigned to the specified class",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{teacher_access_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"exec": [
+					"// Set base URL if not already set",
+					"if (!pm.environment.get(\"base_url\")) {",
+					"    pm.environment.set(\"base_url\", \"http://localhost:8000\");",
+					"}",
+					"",
+					"// Set class_id if not set (use a default for testing)",
+					"if (!pm.environment.get(\"class_id\")) {",
+					"    pm.environment.set(\"class_id\", \"7\");",
+					"}"
+				],
+				"type": "text/javascript"
+			}
+		}
+	],
+	"item": [
+		{
+			"name": "Get Students with Parent Information",
+			"item": [
+				{
+					"name": "1. Get All Students with Parents - Success Case",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has success field\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('success');",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"});",
+									"",
+									"pm.test(\"Response has student and class data\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('data');",
+									"    pm.expect(jsonData.data).to.be.an('array');",
+									"    pm.expect(jsonData).to.have.property('class_info');",
+									"    pm.expect(jsonData).to.have.property('total_students');",
+									"});",
+									"",
+									"pm.test(\"Class info contains expected fields\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.class_info) {",
+									"        pm.expect(jsonData.class_info).to.have.property('id');",
+									"        pm.expect(jsonData.class_info).to.have.property('name');",
+									"        pm.expect(jsonData.class_info).to.have.property('age_group');",
+									"        pm.expect(jsonData.class_info.id).to.eql(parseInt(pm.environment.get('class_id')));",
+									"    }",
+									"});",
+									"",
+									"pm.test(\"Each student has required fields\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.data && jsonData.data.length > 0) {",
+									"        var student = jsonData.data[0];",
+									"        pm.expect(student).to.have.property('id');",
+									"        pm.expect(student).to.have.property('first_name');",
+									"        pm.expect(student).to.have.property('last_name');",
+									"        pm.expect(student).to.have.property('date_of_birth');",
+									"        pm.expect(student).to.have.property('gender');",
+									"        pm.expect(student).to.have.property('enrollment_date');",
+									"        pm.expect(student).to.have.property('is_active');",
+									"        pm.expect(student).to.have.property('parents');",
+									"        ",
+									"        // Store student ID for other tests",
+									"        pm.environment.set('sample_student_id', student.id.toString());",
+									"    }",
+									"});",
+									"",
+									"pm.test(\"Each student has parent information\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.data && jsonData.data.length > 0) {",
+									"        jsonData.data.forEach(function(student, index) {",
+									"            pm.expect(student).to.have.property('parents');",
+									"            pm.expect(student.parents).to.be.an('array');",
+									"            ",
+									"            // Check parent details if they exist",
+									"            if (student.parents.length > 0) {",
+									"                var parent = student.parents[0];",
+									"                pm.expect(parent).to.have.property('id');",
+									"                pm.expect(parent).to.have.property('first_name');",
+									"                pm.expect(parent).to.have.property('last_name');",
+									"                pm.expect(parent).to.have.property('email');",
+									"                pm.expect(parent).to.have.property('phone_number');",
+									"                pm.expect(parent).to.have.property('relationship');",
+									"                pm.expect(parent).to.have.property('is_primary_contact');",
+									"                ",
+									"                console.log(`Student ${index + 1}: ${student.first_name} ${student.last_name} has ${student.parents.length} parent(s)`);",
+									"            }",
+									"        });",
+									"    }",
+									"});",
+									"",
+									"pm.test(\"Data structure is consistent\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.data && jsonData.data.length > 0) {",
+									"        console.log(`Total students in class: ${jsonData.total_students}`);",
+									"        console.log(`Class name: ${jsonData.class_info.name}`);",
+									"        console.log(`Age group: ${jsonData.class_info.age_group}`);",
+									"        ",
+									"        // Count students with and without parents",
+									"        let studentsWithParents = 0;",
+									"        let studentsWithoutParents = 0;",
+									"        ",
+									"        jsonData.data.forEach(function(student) {",
+									"            if (student.parents.length > 0) {",
+									"                studentsWithParents++;",
+									"            } else {",
+									"                studentsWithoutParents++;",
+									"            }",
+									"        });",
+									"        ",
+									"        console.log(`Students with parent info: ${studentsWithParents}`);",
+									"        console.log(`Students without parent info: ${studentsWithoutParents}`);",
+									"        ",
+									"        pm.expect(studentsWithParents + studentsWithoutParents).to.eql(jsonData.total_students);",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/teacher/classes/{{class_id}}/students-with-parents/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"teacher",
+								"classes",
+								"{{class_id}}",
+								"students-with-parents",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "2. Verify Parent Contact Information Structure",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Detailed parent information validation\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.data && jsonData.data.length > 0) {",
+									"        let primaryContactFound = false;",
+									"        let validEmails = 0;",
+									"        let validPhones = 0;",
+									"        ",
+									"        jsonData.data.forEach(function(student) {",
+									"            if (student.parents.length > 0) {",
+									"                student.parents.forEach(function(parent) {",
+									"                    // Check for primary contact",
+									"                    if (parent.is_primary_contact) {",
+									"                        primaryContactFound = true;",
+									"                    }",
+									"                    ",
+									"                    // Validate email format",
+									"                    if (parent.email && parent.email.includes('@')) {",
+									"                        validEmails++;",
+									"                    }",
+									"                    ",
+									"                    // Check phone number exists",
+									"                    if (parent.phone_number && parent.phone_number.length > 0) {",
+									"                        validPhones++;",
+									"                    }",
+									"                    ",
+									"                    // Validate relationship field",
+									"                    pm.expect(parent.relationship).to.be.oneOf(['mother', 'father', 'guardian', 'other']);",
+									"                });",
+									"            }",
+									"        });",
+									"        ",
+									"        console.log(`Primary contacts found: ${primaryContactFound}`);",
+									"        console.log(`Valid email addresses: ${validEmails}`);",
+									"        console.log(`Phone numbers present: ${validPhones}`);",
+									"        ",
+									"        pm.expect(validEmails).to.be.at.least(0);",
+									"        pm.expect(validPhones).to.be.at.least(0);",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/teacher/classes/{{class_id}}/students-with-parents/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"teacher",
+								"classes",
+								"{{class_id}}",
+								"students-with-parents",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Error Cases",
+			"item": [
+				{
+					"name": "3. Non-Assigned Class (Should Fail)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 403\", function () {",
+									"    pm.response.to.have.status(403);",
+									"});",
+									"",
+									"pm.test(\"Error message for non-assigned class\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('error');",
+									"    pm.expect(jsonData.error).to.include('not assigned');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/teacher/classes/99999/students-with-parents/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"teacher",
+								"classes",
+								"99999",
+								"students-with-parents",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "4. Non-Existent Class (Should Fail)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 404\", function () {",
+									"    pm.response.to.have.status(404);",
+									"});",
+									"",
+									"pm.test(\"Error message for non-existent class\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('error');",
+									"    pm.expect(jsonData.error).to.include('Class not found');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/teacher/classes/88888/students-with-parents/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"teacher",
+								"classes",
+								"88888",
+								"students-with-parents",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "5. Invalid Class ID Format",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 404\", function () {",
+									"    pm.response.to.have.status(404);",
+									"});",
+									"",
+									"pm.test(\"Error for invalid class ID format\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('detail');",
+									"    pm.expect(jsonData.detail).to.include('Not found');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/teacher/classes/invalid_id/students-with-parents/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"teacher",
+								"classes",
+								"invalid_id",
+								"students-with-parents",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "6. Unauthorized Access (No Token)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});",
+									"",
+									"pm.test(\"Authentication required error\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('detail');",
+									"    pm.expect(jsonData.detail).to.include('Authentication credentials were not provided');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/teacher/classes/{{class_id}}/students-with-parents/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"teacher",
+								"classes",
+								"{{class_id}}",
+								"students-with-parents",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "7. Parent User Access (Should Fail)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 403\", function () {",
+									"    pm.response.to.have.status(403);",
+									"});",
+									"",
+									"pm.test(\"Error message for non-teacher user\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('error');",
+									"    pm.expect(jsonData.error).to.include('Only teachers');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{parent_access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/teacher/classes/{{class_id}}/students-with-parents/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"teacher",
+								"classes",
+								"{{class_id}}",
+								"students-with-parents",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Data Analysis",
+			"item": [
+				{
+					"name": "8. Generate Contact Report Summary",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Generate comprehensive contact report\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.data && jsonData.data.length > 0) {",
+									"        let report = {",
+									"            totalStudents: jsonData.total_students,",
+									"            studentsWithParents: 0,",
+									"            studentsWithoutParents: 0,",
+									"            totalParents: 0,",
+									"            primaryContacts: 0,",
+									"            parentsWithEmail: 0,",
+									"            parentsWithPhone: 0,",
+									"            relationships: {",
+									"                mother: 0,",
+									"                father: 0,",
+									"                guardian: 0,",
+									"                other: 0",
+									"            }",
+									"        };",
+									"        ",
+									"        jsonData.data.forEach(function(student) {",
+									"            if (student.parents.length > 0) {",
+									"                report.studentsWithParents++;",
+									"                report.totalParents += student.parents.length;",
+									"                ",
+									"                student.parents.forEach(function(parent) {",
+									"                    if (parent.is_primary_contact) report.primaryContacts++;",
+									"                    if (parent.email && parent.email.includes('@')) report.parentsWithEmail++;",
+									"                    if (parent.phone_number && parent.phone_number.length > 0) report.parentsWithPhone++;",
+									"                    ",
+									"                    if (report.relationships[parent.relationship] !== undefined) {",
+									"                        report.relationships[parent.relationship]++;",
+									"                    }",
+									"                });",
+									"            } else {",
+									"                report.studentsWithoutParents++;",
+									"            }",
+									"        });",
+									"        ",
+									"        console.log('=== CLASS CONTACT REPORT ===');",
+									"        console.log(`Class: ${jsonData.class_info.name} (${jsonData.class_info.age_group})`);",
+									"        console.log(`Total Students: ${report.totalStudents}`);",
+									"        console.log(`Students with Parent Info: ${report.studentsWithParents}`);",
+									"        console.log(`Students without Parent Info: ${report.studentsWithoutParents}`);",
+									"        console.log(`Total Parent Records: ${report.totalParents}`);",
+									"        console.log(`Primary Contacts: ${report.primaryContacts}`);",
+									"        console.log(`Parents with Email: ${report.parentsWithEmail}`);",
+									"        console.log(`Parents with Phone: ${report.parentsWithPhone}`);",
+									"        console.log('=== RELATIONSHIP BREAKDOWN ===');",
+									"        console.log(`Mothers: ${report.relationships.mother}`);",
+									"        console.log(`Fathers: ${report.relationships.father}`);",
+									"        console.log(`Guardians: ${report.relationships.guardian}`);",
+									"        console.log(`Other: ${report.relationships.other}`);",
+									"        ",
+									"        // Store report data",
+									"        pm.environment.set('contact_report', JSON.stringify(report));",
+									"        ",
+									"        pm.expect(report.totalStudents).to.be.above(0);",
+									"        pm.expect(report.studentsWithParents + report.studentsWithoutParents).to.eql(report.totalStudents);",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/teacher/classes/{{class_id}}/students-with-parents/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"teacher",
+								"classes",
+								"{{class_id}}",
+								"students-with-parents",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000",
+			"description": "Base URL for the API"
+		},
+		{
+			"key": "teacher_access_token",
+			"value": "",
+			"description": "JWT access token for teacher authentication"
+		},
+		{
+			"key": "class_id",
+			"value": "7",
+			"description": "ID of a class that the teacher is assigned to"
+		},
+		{
+			"key": "parent_access_token",
+			"value": "",
+			"description": "JWT access token for parent (used in negative test)"
+		},
+		{
+			"key": "sample_student_id",
+			"value": "",
+			"description": "Sample student ID (auto-populated from first test)"
+		},
+		{
+			"key": "contact_report",
+			"value": "",
+			"description": "Generated contact report (auto-populated from analysis test)"
+		}
+	]
+}

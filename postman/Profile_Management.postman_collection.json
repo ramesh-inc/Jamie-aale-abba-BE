@@ -1,0 +1,733 @@
+{
+	"info": {
+		"_postman_id": "profile-management-collection",
+		"name": "Profile Management & Password Changes",
+		"description": "Profile management and password change endpoints for all user types:\n\n1. GET /auth/profile/ - Get current user profile\n2. PUT/PATCH /auth/profile/update/ - Update user profile\n3. POST /auth/parent/change-password/ - Parent password change\n4. POST /auth/teacher/change-password/ - Teacher password change\n5. POST /auth/admin/change-password/ - Admin password change (first-time)\n\nPrerequisites:\n- User must be logged in with appropriate access token\n- Set environment variables: access_token for the user type being tested",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"exec": [
+					"// Set base URL if not already set",
+					"if (!pm.environment.get(\"base_url\")) {",
+					"    pm.environment.set(\"base_url\", \"http://localhost:8000\");",
+					"}"
+				],
+				"type": "text/javascript"
+			}
+		}
+	],
+	"item": [
+		{
+			"name": "Authentication Setup",
+			"item": [
+				{
+					"name": "Login as Parent",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has access token\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('access');",
+									"    pm.environment.set('parent_access_token', responseJson.access);",
+									"});",
+									"",
+									"pm.test(\"User type is parent\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.user.user_type).to.eql('parent');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"{{parent_email}}\",\n    \"password\": \"{{parent_password}}\",\n    \"user_type\": \"parent\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/login/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "auth", "login", ""]
+						}
+					}
+				},
+				{
+					"name": "Login as Teacher",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has access token\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('access');",
+									"    pm.environment.set('teacher_access_token', responseJson.access);",
+									"});",
+									"",
+									"pm.test(\"User type is teacher\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.user.user_type).to.eql('teacher');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"{{teacher_email}}\",\n    \"password\": \"{{teacher_password}}\",\n    \"user_type\": \"teacher\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/login/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "auth", "login", ""]
+						}
+					}
+				},
+				{
+					"name": "Login as Admin",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has access token\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('access');",
+									"    pm.environment.set('admin_access_token', responseJson.access);",
+									"});",
+									"",
+									"pm.test(\"User type is admin\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.user.user_type).to.eql('admin');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"{{admin_email}}\",\n    \"password\": \"{{admin_password}}\",\n    \"user_type\": \"admin\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/login/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "auth", "login", ""]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Profile Information",
+			"item": [
+				{
+					"name": "Get Parent Profile",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has user profile data\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('id');",
+									"    pm.expect(responseJson).to.have.property('email');",
+									"    pm.expect(responseJson).to.have.property('first_name');",
+									"    pm.expect(responseJson).to.have.property('last_name');",
+									"    pm.expect(responseJson).to.have.property('user_type');",
+									"});",
+									"",
+									"pm.test(\"User type is parent\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.user_type).to.eql('parent');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{parent_access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/profile/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "auth", "profile", ""]
+						}
+					}
+				},
+				{
+					"name": "Get Teacher Profile",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{teacher_access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/profile/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "auth", "profile", ""]
+						}
+					}
+				},
+				{
+					"name": "Get Admin Profile",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/profile/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "auth", "profile", ""]
+						}
+					}
+				},
+				{
+					"name": "Get Profile without Authentication",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/profile/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "auth", "profile", ""]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Profile Updates",
+			"item": [
+				{
+					"name": "Update Parent Profile - Full Update",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Profile updated successfully\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('message');",
+									"    pm.expect(responseJson.message).to.include('updated');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{parent_access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"first_name\": \"Updated\",\n    \"last_name\": \"Parent\",\n    \"phone_number\": \"+1-555-123-4567\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/profile/update/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "auth", "profile", "update", ""]
+						}
+					}
+				},
+				{
+					"name": "Update Parent Profile - Partial Update",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{parent_access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"first_name\": \"Partially Updated\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/profile/update/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "auth", "profile", "update", ""]
+						}
+					}
+				},
+				{
+					"name": "Update Profile - Invalid Data",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Response has validation errors\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('phone_number');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{parent_access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"first_name\": \"Test\",\n    \"last_name\": \"User\",\n    \"phone_number\": \"invalid-phone-format\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/profile/update/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "auth", "profile", "update", ""]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Password Changes",
+			"item": [
+				{
+					"name": "Parent Change Password - Success",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Password changed successfully\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('message');",
+									"    pm.expect(responseJson.message).to.include('changed');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{parent_access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"old_password\": \"{{parent_password}}\",\n    \"new_password\": \"NewParentPassword123!\",\n    \"confirm_password\": \"NewParentPassword123!\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/parent/change-password/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "auth", "parent", "change-password", ""]
+						}
+					}
+				},
+				{
+					"name": "Parent Change Password - Wrong Old Password",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Response indicates incorrect old password\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('old_password');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{parent_access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"old_password\": \"WrongOldPassword\",\n    \"new_password\": \"NewParentPassword123!\",\n    \"confirm_password\": \"NewParentPassword123!\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/parent/change-password/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "auth", "parent", "change-password", ""]
+						}
+					}
+				},
+				{
+					"name": "Parent Change Password - Password Mismatch",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Response indicates password mismatch\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('confirm_password');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{parent_access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"old_password\": \"{{parent_password}}\",\n    \"new_password\": \"NewParentPassword123!\",\n    \"confirm_password\": \"DifferentPassword123!\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/parent/change-password/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "auth", "parent", "change-password", ""]
+						}
+					}
+				},
+				{
+					"name": "Teacher Change Password - Success",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{teacher_access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"old_password\": \"{{teacher_password}}\",\n    \"new_password\": \"NewTeacherPassword123!\",\n    \"confirm_password\": \"NewTeacherPassword123!\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/teacher/change-password/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "auth", "teacher", "change-password", ""]
+						}
+					}
+				},
+				{
+					"name": "Admin First-Time Password Change",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"old_password\": \"{{admin_password}}\",\n    \"new_password\": \"NewAdminPassword123!\",\n    \"confirm_password\": \"NewAdminPassword123!\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/admin/change-password/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "auth", "admin", "change-password", ""]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Access Control Tests",
+			"item": [
+				{
+					"name": "Parent Access Teacher Password Change (Should Fail)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 403\", function () {",
+									"    pm.response.to.have.status(403);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{parent_access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"old_password\": \"SomePassword\",\n    \"new_password\": \"NewPassword123!\",\n    \"confirm_password\": \"NewPassword123!\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/teacher/change-password/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "auth", "teacher", "change-password", ""]
+						}
+					}
+				},
+				{
+					"name": "Teacher Access Parent Password Change (Should Fail)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 403\", function () {",
+									"    pm.response.to.have.status(403);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{teacher_access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"old_password\": \"SomePassword\",\n    \"new_password\": \"NewPassword123!\",\n    \"confirm_password\": \"NewPassword123!\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/parent/change-password/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "auth", "parent", "change-password", ""]
+						}
+					}
+				}
+			]
+		}
+	]
+}

@@ -1,0 +1,432 @@
+{
+	"info": {
+		"_postman_id": "parent-analytics-collection",
+		"name": "Parent Analytics & Activity Endpoints",
+		"description": "Collection for parent analytics endpoints:\n\n1. GET /parent/children/{child_id}/learning-activities/ - Get child's learning activities by month/year\n2. GET /parent/children/{child_id}/attendance/ - Get child's attendance data by month/year\n3. GET /parent/children/{child_id}/daily-activities/ - Get detailed daily activities for a child\n\nPrerequisites:\n- Parent must be logged in\n- Set environment variables: parent_access_token, child_id\n- Child must be linked to the parent account",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{parent_access_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"exec": [
+					"// Set base URL if not already set",
+					"if (!pm.environment.get(\"base_url\")) {",
+					"    pm.environment.set(\"base_url\", \"http://localhost:8000\");",
+					"}",
+					"",
+					"// Set current year if not set",
+					"if (!pm.environment.get(\"current_year\")) {",
+					"    const currentYear = new Date().getFullYear().toString();",
+					"    pm.environment.set(\"current_year\", currentYear);",
+					"}",
+					"",
+					"// Set child_id if not set (use a default for testing)",
+					"if (!pm.environment.get(\"child_id\")) {",
+					"    pm.environment.set(\"child_id\", \"1\");",
+					"}"
+				],
+				"type": "text/javascript"
+			}
+		}
+	],
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Login as Parent",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has access token\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('access');",
+									"    pm.environment.set('parent_access_token', responseJson.access);",
+									"});",
+									"",
+									"pm.test(\"User type is parent\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.user.user_type).to.eql('parent');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"{{parent_email}}\",\n    \"password\": \"{{parent_password}}\",\n    \"user_type\": \"parent\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/login/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "auth", "login", ""]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Learning Activities Analytics",
+			"item": [
+				{
+					"name": "Get Child Learning Activities - Current Year",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response is an array\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.be.an('array');",
+									"});",
+									"",
+									"pm.test(\"Each item has required fields\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    if (responseJson.length > 0) {",
+									"        responseJson.forEach(item => {",
+									"            pm.expect(item).to.have.property('month');",
+									"            pm.expect(item).to.have.property('hours');",
+									"        });",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/parent/children/{{child_id}}/learning-activities/?year={{current_year}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "parent", "children", "{{child_id}}", "learning-activities", ""],
+							"query": [
+								{
+									"key": "year",
+									"value": "{{current_year}}"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Child Learning Activities - Previous Year",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const previousYear = (new Date().getFullYear() - 1).toString();",
+									"pm.environment.set(\"previous_year\", previousYear);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/parent/children/{{child_id}}/learning-activities/?year={{previous_year}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "parent", "children", "{{child_id}}", "learning-activities", ""],
+							"query": [
+								{
+									"key": "year",
+									"value": "{{previous_year}}"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Attendance Analytics",
+			"item": [
+				{
+					"name": "Get Child Attendance - Current Year",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response is an array\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.be.an('array');",
+									"});",
+									"",
+									"pm.test(\"Each item has required attendance fields\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    if (responseJson.length > 0) {",
+									"        responseJson.forEach(item => {",
+									"            pm.expect(item).to.have.property('month');",
+									"            pm.expect(item).to.have.property('total_days');",
+									"            pm.expect(item).to.have.property('present_days');",
+									"            pm.expect(item).to.have.property('late_days');",
+									"            pm.expect(item).to.have.property('absent_days');",
+									"            pm.expect(item).to.have.property('attendance_rate');",
+									"        });",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/parent/children/{{child_id}}/attendance/?year={{current_year}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "parent", "children", "{{child_id}}", "attendance", ""],
+							"query": [
+								{
+									"key": "year",
+									"value": "{{current_year}}"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Child Attendance - Previous Year",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/parent/children/{{child_id}}/attendance/?year={{previous_year}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "parent", "children", "{{child_id}}", "attendance", ""],
+							"query": [
+								{
+									"key": "year",
+									"value": "{{previous_year}}"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Daily Activities",
+			"item": [
+				{
+					"name": "Get Child Daily Activities - Current Month",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const currentDate = new Date();",
+									"const currentMonth = (currentDate.getMonth() + 1).toString().padStart(2, '0');",
+									"const currentYear = currentDate.getFullYear().toString();",
+									"pm.environment.set(\"current_month\", currentMonth);",
+									"pm.environment.set(\"current_year\", currentYear);"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response is an array\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.be.an('array');",
+									"});",
+									"",
+									"pm.test(\"Each activity has required fields\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    if (responseJson.length > 0) {",
+									"        responseJson.forEach(activity => {",
+									"            pm.expect(activity).to.have.property('session_date');",
+									"            pm.expect(activity).to.have.property('activity_name');",
+									"            pm.expect(activity).to.have.property('description');",
+									"            pm.expect(activity).to.have.property('duration_hours');",
+									"        });",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/parent/children/{{child_id}}/daily-activities/?month={{current_month}}&year={{current_year}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "parent", "children", "{{child_id}}", "daily-activities", ""],
+							"query": [
+								{
+									"key": "month",
+									"value": "{{current_month}}"
+								},
+								{
+									"key": "year",
+									"value": "{{current_year}}"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Child Daily Activities - Specific Date Range",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Set a specific date range for testing",
+									"const endDate = new Date();",
+									"const startDate = new Date();",
+									"startDate.setDate(endDate.getDate() - 7); // Last 7 days",
+									"",
+									"const formatDate = (date) => {",
+									"    return date.toISOString().split('T')[0];",
+									"};",
+									"",
+									"pm.environment.set(\"start_date\", formatDate(startDate));",
+									"pm.environment.set(\"end_date\", formatDate(endDate));"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/parent/children/{{child_id}}/daily-activities/?start_date={{start_date}}&end_date={{end_date}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "parent", "children", "{{child_id}}", "daily-activities", ""],
+							"query": [
+								{
+									"key": "start_date",
+									"value": "{{start_date}}"
+								},
+								{
+									"key": "end_date",
+									"value": "{{end_date}}"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Error Cases",
+			"item": [
+				{
+					"name": "Get Activities for Non-existent Child",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 404\", function () {",
+									"    pm.response.to.have.status(404);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/parent/children/9999/learning-activities/?year={{current_year}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "parent", "children", "9999", "learning-activities", ""],
+							"query": [
+								{
+									"key": "year",
+									"value": "{{current_year}}"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Activities without Authentication",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/parent/children/{{child_id}}/learning-activities/?year={{current_year}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "parent", "children", "{{child_id}}", "learning-activities", ""],
+							"query": [
+								{
+									"key": "year",
+									"value": "{{current_year}}"
+								}
+							]
+						}
+					}
+				}
+			]
+		}
+	]
+}

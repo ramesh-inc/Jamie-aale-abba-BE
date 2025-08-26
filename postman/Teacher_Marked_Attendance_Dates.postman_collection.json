@@ -1,0 +1,642 @@
+{
+	"info": {
+		"_postman_id": "teacher-marked-attendance-dates-collection",
+		"name": "Teacher - Marked Attendance Dates",
+		"description": "Collection for teacher to check which dates have attendance marked for their classes:\n\n1. GET /teacher/classes/{class_id}/marked-dates/ - Get all dates where attendance has been marked for a specific class\n2. GET /teacher/classes/{class_id}/marked-dates/?month=MM&year=YYYY - Filter by specific month/year\n\nThis endpoint is useful for:\n- Calendar views showing which dates have attendance data\n- Preventing duplicate attendance marking\n- Identifying missing attendance records\n\nPrerequisites:\n- Teacher must be logged in\n- Set environment variables: teacher_access_token, class_id\n- Teacher must be assigned to the specified class",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{teacher_access_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"exec": [
+					"// Set base URL if not already set",
+					"if (!pm.environment.get(\"base_url\")) {",
+					"    pm.environment.set(\"base_url\", \"http://localhost:8000\");",
+					"}",
+					"",
+					"// Set current month/year for filtering if not set",
+					"if (!pm.environment.get(\"current_month\")) {",
+					"    const now = new Date();",
+					"    const currentMonth = (now.getMonth() + 1).toString().padStart(2, '0');",
+					"    const currentYear = now.getFullYear().toString();",
+					"    pm.environment.set(\"current_month\", currentMonth);",
+					"    pm.environment.set(\"current_year\", currentYear);",
+					"}",
+					"",
+					"// Set previous month for comparison",
+					"if (!pm.environment.get(\"previous_month\")) {",
+					"    const now = new Date();",
+					"    now.setMonth(now.getMonth() - 1);",
+					"    const previousMonth = (now.getMonth() + 1).toString().padStart(2, '0');",
+					"    const previousYear = now.getFullYear().toString();",
+					"    pm.environment.set(\"previous_month\", previousMonth);",
+					"    pm.environment.set(\"previous_year\", previousYear);",
+					"}"
+				],
+				"type": "text/javascript"
+			}
+		}
+	],
+	"item": [
+		{
+			"name": "Get Marked Attendance Dates",
+			"item": [
+				{
+					"name": "1. Get All Marked Dates for Class",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has success field\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('success');",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"});",
+									"",
+									"pm.test(\"Response has marked dates array\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('data');",
+									"    pm.expect(jsonData.data).to.be.an('array');",
+									"    pm.expect(jsonData).to.have.property('class_info');",
+									"    pm.expect(jsonData).to.have.property('total_dates');",
+									"});",
+									"",
+									"pm.test(\"Class info contains expected fields\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.class_info) {",
+									"        pm.expect(jsonData.class_info).to.have.property('id');",
+									"        pm.expect(jsonData.class_info).to.have.property('name');",
+									"        pm.expect(jsonData.class_info.id).to.eql(parseInt(pm.environment.get('class_id')));",
+									"    }",
+									"});",
+									"",
+									"pm.test(\"Each date entry has required fields\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.data && jsonData.data.length > 0) {",
+									"        var dateEntry = jsonData.data[0];",
+									"        pm.expect(dateEntry).to.have.property('date');",
+									"        pm.expect(dateEntry).to.have.property('student_count');",
+									"        pm.expect(dateEntry).to.have.property('marked_by');",
+									"        pm.expect(dateEntry).to.have.property('marked_at');",
+									"        ",
+									"        // Store a sample date for filtering tests",
+									"        if (jsonData.data[0].date) {",
+									"            const sampleDate = new Date(jsonData.data[0].date);",
+									"            const sampleMonth = (sampleDate.getMonth() + 1).toString().padStart(2, '0');",
+									"            const sampleYear = sampleDate.getFullYear().toString();",
+									"            pm.environment.set('sample_month', sampleMonth);",
+									"            pm.environment.set('sample_year', sampleYear);",
+									"        }",
+									"    }",
+									"});",
+									"",
+									"pm.test(\"Dates are valid and sorted\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.data && jsonData.data.length > 1) {",
+									"        for (let i = 0; i < jsonData.data.length; i++) {",
+									"            pm.expect(jsonData.data[i].date).to.match(/^\\d{4}-\\d{2}-\\d{2}$/);",
+									"            if (i > 0) {",
+									"                pm.expect(new Date(jsonData.data[i].date)).to.be.at.most(new Date(jsonData.data[i-1].date));",
+									"            }",
+									"        }",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/teacher/classes/{{class_id}}/marked-dates/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"teacher",
+								"classes",
+								"{{class_id}}",
+								"marked-dates",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "2. Get Marked Dates - Current Month Filter",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has filters applied\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('filters');",
+									"    pm.expect(jsonData.filters).to.have.property('month');",
+									"    pm.expect(jsonData.filters).to.have.property('year');",
+									"    pm.expect(jsonData.filters.month).to.eql(parseInt(pm.environment.get('current_month')));",
+									"    pm.expect(jsonData.filters.year).to.eql(parseInt(pm.environment.get('current_year')));",
+									"});",
+									"",
+									"pm.test(\"All dates are within the specified month/year\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    const filterMonth = parseInt(pm.environment.get('current_month'));",
+									"    const filterYear = parseInt(pm.environment.get('current_year'));",
+									"    ",
+									"    if (jsonData.data && jsonData.data.length > 0) {",
+									"        jsonData.data.forEach(function(dateEntry) {",
+									"            const entryDate = new Date(dateEntry.date);",
+									"            pm.expect(entryDate.getMonth() + 1).to.eql(filterMonth);",
+									"            pm.expect(entryDate.getFullYear()).to.eql(filterYear);",
+									"        });",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/teacher/classes/{{class_id}}/marked-dates/?month={{current_month}}&year={{current_year}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"teacher",
+								"classes",
+								"{{class_id}}",
+								"marked-dates",
+								""
+							],
+							"query": [
+								{
+									"key": "month",
+									"value": "{{current_month}}"
+								},
+								{
+									"key": "year",
+									"value": "{{current_year}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "3. Get Marked Dates - Previous Month Filter",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has previous month filters applied\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('filters');",
+									"    pm.expect(jsonData.filters.month).to.eql(parseInt(pm.environment.get('previous_month')));",
+									"    pm.expect(jsonData.filters.year).to.eql(parseInt(pm.environment.get('previous_year')));",
+									"});",
+									"",
+									"pm.test(\"All dates are within the previous month/year\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    const filterMonth = parseInt(pm.environment.get('previous_month'));",
+									"    const filterYear = parseInt(pm.environment.get('previous_year'));",
+									"    ",
+									"    if (jsonData.data && jsonData.data.length > 0) {",
+									"        jsonData.data.forEach(function(dateEntry) {",
+									"            const entryDate = new Date(dateEntry.date);",
+									"            pm.expect(entryDate.getMonth() + 1).to.eql(filterMonth);",
+									"            pm.expect(entryDate.getFullYear()).to.eql(filterYear);",
+									"        });",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/teacher/classes/{{class_id}}/marked-dates/?month={{previous_month}}&year={{previous_year}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"teacher",
+								"classes",
+								"{{class_id}}",
+								"marked-dates",
+								""
+							],
+							"query": [
+								{
+									"key": "month",
+									"value": "{{previous_month}}"
+								},
+								{
+									"key": "year",
+									"value": "{{previous_year}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "4. Get Marked Dates - Specific Month (Using Sample Data)",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Use sample month from previous test if available, otherwise use current month",
+									"if (!pm.environment.get(\"sample_month\")) {",
+									"    const now = new Date();",
+									"    const currentMonth = (now.getMonth() + 1).toString().padStart(2, '0');",
+									"    const currentYear = now.getFullYear().toString();",
+									"    pm.environment.set(\"sample_month\", currentMonth);",
+									"    pm.environment.set(\"sample_year\", currentYear);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response shows sample month data\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.data && jsonData.data.length > 0) {",
+									"        console.log(`Found ${jsonData.data.length} marked dates for month ${pm.environment.get('sample_month')}/${pm.environment.get('sample_year')}`);",
+									"        jsonData.data.forEach(function(dateEntry, index) {",
+									"            console.log(`Date ${index + 1}: ${dateEntry.date} (${dateEntry.student_count} students)`);",
+									"        });",
+									"    } else {",
+									"        console.log(`No marked dates found for month ${pm.environment.get('sample_month')}/${pm.environment.get('sample_year')}`);",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/teacher/classes/{{class_id}}/marked-dates/?month={{sample_month}}&year={{sample_year}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"teacher",
+								"classes",
+								"{{class_id}}",
+								"marked-dates",
+								""
+							],
+							"query": [
+								{
+									"key": "month",
+									"value": "{{sample_month}}"
+								},
+								{
+									"key": "year",
+									"value": "{{sample_year}}"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Error Cases",
+			"item": [
+				{
+					"name": "5. Non-Assigned Class (Should Fail)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 403\", function () {",
+									"    pm.response.to.have.status(403);",
+									"});",
+									"",
+									"pm.test(\"Error message for non-assigned class\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('error');",
+									"    pm.expect(jsonData.error).to.include('not assigned');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/teacher/classes/99999/marked-dates/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"teacher",
+								"classes",
+								"99999",
+								"marked-dates",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "6. Invalid Month Parameter",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Error message for invalid month\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('error');",
+									"    pm.expect(jsonData.error).to.include('Invalid month');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/teacher/classes/{{class_id}}/marked-dates/?month=13&year=2024",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"teacher",
+								"classes",
+								"{{class_id}}",
+								"marked-dates",
+								""
+							],
+							"query": [
+								{
+									"key": "month",
+									"value": "13"
+								},
+								{
+									"key": "year",
+									"value": "2024"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "7. Invalid Year Parameter",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Error message for invalid year\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('error');",
+									"    pm.expect(jsonData.error).to.include('Invalid year');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/teacher/classes/{{class_id}}/marked-dates/?month=08&year=abc",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"teacher",
+								"classes",
+								"{{class_id}}",
+								"marked-dates",
+								""
+							],
+							"query": [
+								{
+									"key": "month",
+									"value": "08"
+								},
+								{
+									"key": "year",
+									"value": "abc"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "8. Unauthorized Access (No Token)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});",
+									"",
+									"pm.test(\"Authentication required error\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('detail');",
+									"    pm.expect(jsonData.detail).to.include('Authentication credentials were not provided');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/teacher/classes/{{class_id}}/marked-dates/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"teacher",
+								"classes",
+								"{{class_id}}",
+								"marked-dates",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000",
+			"description": "Base URL for the API"
+		},
+		{
+			"key": "teacher_access_token",
+			"value": "",
+			"description": "JWT access token for teacher authentication"
+		},
+		{
+			"key": "class_id",
+			"value": "7",
+			"description": "ID of a class that the teacher is assigned to"
+		},
+		{
+			"key": "current_month",
+			"value": "",
+			"description": "Current month (auto-populated, format: MM)"
+		},
+		{
+			"key": "current_year",
+			"value": "",
+			"description": "Current year (auto-populated, format: YYYY)"
+		},
+		{
+			"key": "previous_month",
+			"value": "",
+			"description": "Previous month (auto-populated, format: MM)"
+		},
+		{
+			"key": "previous_year",
+			"value": "",
+			"description": "Previous year (auto-populated, format: YYYY)"
+		},
+		{
+			"key": "sample_month",
+			"value": "",
+			"description": "Sample month from data (auto-populated from first test)"
+		},
+		{
+			"key": "sample_year",
+			"value": "",
+			"description": "Sample year from data (auto-populated from first test)"
+		}
+	]
+}

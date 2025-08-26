@@ -1,0 +1,516 @@
+{
+	"info": {
+		"_postman_id": "teacher-my-activities-collection",
+		"name": "Teacher - My Learning Activities",
+		"description": "Collection for teacher to view their recorded learning activities:\n\n1. GET /teacher/learning-activities/ - Get all activities recorded by the teacher\n2. GET /teacher/learning-activities/?date=YYYY-MM-DD - Filter activities by specific date\n3. GET /teacher/learning-activities/?class_id=X - Filter activities by specific class\n4. GET /teacher/learning-activities/?date=YYYY-MM-DD&class_id=X - Combined filters\n\nPrerequisites:\n- Teacher must be logged in\n- Set environment variables: teacher_access_token, class_id\n- Teacher must have recorded some activities to see results",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{teacher_access_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"exec": [
+					"// Set base URL if not already set",
+					"if (!pm.environment.get(\"base_url\")) {",
+					"    pm.environment.set(\"base_url\", \"http://localhost:8000\");",
+					"}",
+					"",
+					"// Set today's date for filtering if not set",
+					"if (!pm.environment.get(\"filter_date\")) {",
+					"    const today = new Date().toISOString().split('T')[0];",
+					"    pm.environment.set(\"filter_date\", today);",
+					"}",
+					"",
+					"// Set a previous date for comparison",
+					"if (!pm.environment.get(\"previous_date\")) {",
+					"    const yesterday = new Date();",
+					"    yesterday.setDate(yesterday.getDate() - 1);",
+					"    pm.environment.set(\"previous_date\", yesterday.toISOString().split('T')[0]);",
+					"}"
+				],
+				"type": "text/javascript"
+			}
+		}
+	],
+	"item": [
+		{
+			"name": "Get My Activities",
+			"item": [
+				{
+					"name": "1. Get All My Activities",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has success field\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('success');",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"});",
+									"",
+									"pm.test(\"Response has activities array\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('data');",
+									"    pm.expect(jsonData.data).to.be.an('array');",
+									"    pm.expect(jsonData).to.have.property('total_count');",
+									"});",
+									"",
+									"pm.test(\"Each activity has required fields\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.data && jsonData.data.length > 0) {",
+									"        var activity = jsonData.data[0];",
+									"        pm.expect(activity).to.have.property('session_id');",
+									"        pm.expect(activity).to.have.property('session_date');",
+									"        pm.expect(activity).to.have.property('activity');",
+									"        pm.expect(activity.activity).to.have.property('name');",
+									"        pm.expect(activity.activity).to.have.property('category');",
+									"        pm.expect(activity).to.have.property('class');",
+									"        pm.expect(activity).to.have.property('student_count');",
+									"        pm.expect(activity).to.have.property('duration_minutes');",
+									"    }",
+									"});",
+									"",
+									"pm.test(\"Store activity data for reference\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.data && jsonData.data.length > 0) {",
+									"        pm.environment.set('sample_session_date', jsonData.data[0].session_date);",
+									"        pm.environment.set('sample_class_id', jsonData.data[0].class.id.toString());",
+									"        console.log('Found activities for date:', jsonData.data[0].session_date);",
+									"        console.log('Found activities for class:', jsonData.data[0].class.name);",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/teacher/learning-activities/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"teacher",
+								"learning-activities",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "2. Get Activities by Date Filter",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has filters applied\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('filters');",
+									"    pm.expect(jsonData.filters).to.have.property('date');",
+									"    pm.expect(jsonData.filters.date).to.eql(pm.environment.get('filter_date'));",
+									"});",
+									"",
+									"pm.test(\"All activities match the date filter\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    const filterDate = pm.environment.get('filter_date');",
+									"    if (jsonData.data && jsonData.data.length > 0) {",
+									"        jsonData.data.forEach(function(activity) {",
+									"            pm.expect(activity.session_date).to.eql(filterDate);",
+									"        });",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/teacher/learning-activities/?date={{filter_date}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"teacher",
+								"learning-activities",
+								""
+							],
+							"query": [
+								{
+									"key": "date",
+									"value": "{{filter_date}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "3. Get Activities by Class Filter",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has class filter applied\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('filters');",
+									"    pm.expect(jsonData.filters).to.have.property('class_id');",
+									"    pm.expect(jsonData.filters.class_id).to.eql(parseInt(pm.environment.get('class_id')));",
+									"});",
+									"",
+									"pm.test(\"All activities match the class filter\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    const filterClassId = parseInt(pm.environment.get('class_id'));",
+									"    if (jsonData.data && jsonData.data.length > 0) {",
+									"        jsonData.data.forEach(function(activity) {",
+									"            pm.expect(activity.class.id).to.eql(filterClassId);",
+									"        });",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/teacher/learning-activities/?class_id={{class_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"teacher",
+								"learning-activities",
+								""
+							],
+							"query": [
+								{
+									"key": "class_id",
+									"value": "{{class_id}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "4. Get Activities - Combined Filters",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has both filters applied\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('filters');",
+									"    pm.expect(jsonData.filters).to.have.property('date');",
+									"    pm.expect(jsonData.filters).to.have.property('class_id');",
+									"    pm.expect(jsonData.filters.date).to.eql(pm.environment.get('filter_date'));",
+									"    pm.expect(jsonData.filters.class_id).to.eql(parseInt(pm.environment.get('class_id')));",
+									"});",
+									"",
+									"pm.test(\"All activities match both filters\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    const filterDate = pm.environment.get('filter_date');",
+									"    const filterClassId = parseInt(pm.environment.get('class_id'));",
+									"    if (jsonData.data && jsonData.data.length > 0) {",
+									"        jsonData.data.forEach(function(activity) {",
+									"            pm.expect(activity.session_date).to.eql(filterDate);",
+									"            pm.expect(activity.class.id).to.eql(filterClassId);",
+									"        });",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/teacher/learning-activities/?date={{filter_date}}&class_id={{class_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"teacher",
+								"learning-activities",
+								""
+							],
+							"query": [
+								{
+									"key": "date",
+									"value": "{{filter_date}}"
+								},
+								{
+									"key": "class_id",
+									"value": "{{class_id}}"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Error Cases",
+			"item": [
+				{
+					"name": "5. Invalid Date Format",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Error message for invalid date format\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('error');",
+									"    pm.expect(jsonData.error).to.include('Invalid date format');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/teacher/learning-activities/?date=2023/12/01",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"teacher",
+								"learning-activities",
+								""
+							],
+							"query": [
+								{
+									"key": "date",
+									"value": "2023/12/01"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "6. Non-existent Class ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200 (returns empty result)\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"No activities found for non-existent class\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.be.an('array');",
+									"    pm.expect(jsonData.data.length).to.eql(0);",
+									"    pm.expect(jsonData.total_count).to.eql(0);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/teacher/learning-activities/?class_id=99999",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"teacher",
+								"learning-activities",
+								""
+							],
+							"query": [
+								{
+									"key": "class_id",
+									"value": "99999"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "7. Unauthorized Access (No Token)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});",
+									"",
+									"pm.test(\"Authentication required error\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('detail');",
+									"    pm.expect(jsonData.detail).to.include('Authentication credentials were not provided');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/teacher/learning-activities/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"teacher",
+								"learning-activities",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000",
+			"description": "Base URL for the API"
+		},
+		{
+			"key": "teacher_access_token",
+			"value": "",
+			"description": "JWT access token for teacher authentication"
+		},
+		{
+			"key": "class_id",
+			"value": "7",
+			"description": "ID of a class that the teacher is assigned to"
+		},
+		{
+			"key": "filter_date",
+			"value": "",
+			"description": "Date filter for activities (auto-populated to today's date)"
+		},
+		{
+			"key": "previous_date",
+			"value": "",
+			"description": "Previous date for comparison tests (auto-populated to yesterday)"
+		},
+		{
+			"key": "sample_session_date",
+			"value": "",
+			"description": "Sample session date from first test (auto-populated)"
+		},
+		{
+			"key": "sample_class_id",
+			"value": "",
+			"description": "Sample class ID from first test (auto-populated)"
+		}
+	]
+}

@@ -1,0 +1,441 @@
+{
+	"info": {
+		"_postman_id": "teacher-student-reports-collection",
+		"name": "Teacher Student Reports & Analytics",
+		"description": "Collection for teacher student reporting endpoints:\n\n1. GET /teacher/students/{student_id}/learning-activities/ - Get student's learning activities by year\n2. GET /teacher/students/{student_id}/attendance/ - Get student's attendance data by year\n\nPrerequisites:\n- Teacher must be logged in\n- Set environment variables: teacher_access_token, student_id\n- Teacher must have access to the specified student",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{teacher_access_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"exec": [
+					"// Set base URL if not already set",
+					"if (!pm.environment.get(\"base_url\")) {",
+					"    pm.environment.set(\"base_url\", \"http://localhost:8000\");",
+					"}",
+					"",
+					"// Set current year if not set",
+					"if (!pm.environment.get(\"current_year\")) {",
+					"    const currentYear = new Date().getFullYear().toString();",
+					"    pm.environment.set(\"current_year\", currentYear);",
+					"}",
+					"",
+					"// Set student_id if not set (use a default for testing)",
+					"if (!pm.environment.get(\"student_id\")) {",
+					"    pm.environment.set(\"student_id\", \"1\");",
+					"}"
+				],
+				"type": "text/javascript"
+			}
+		}
+	],
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Login as Teacher",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has access token\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('access');",
+									"    pm.environment.set('teacher_access_token', responseJson.access);",
+									"});",
+									"",
+									"pm.test(\"User type is teacher\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.user.user_type).to.eql('teacher');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"{{teacher_email}}\",\n    \"password\": \"{{teacher_password}}\",\n    \"user_type\": \"teacher\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/login/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "auth", "login", ""]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Student Learning Activities Reports",
+			"item": [
+				{
+					"name": "Get Student Learning Activities - Current Year",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response is an array\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.be.an('array');",
+									"});",
+									"",
+									"pm.test(\"Each item has required fields\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    if (responseJson.length > 0) {",
+									"        responseJson.forEach(item => {",
+									"            pm.expect(item).to.have.property('month');",
+									"            pm.expect(item).to.have.property('hours');",
+									"        });",
+									"    }",
+									"});",
+									"",
+									"// Store the first month's data for reference",
+									"const responseJson = pm.response.json();",
+									"if (responseJson.length > 0) {",
+									"    pm.environment.set('sample_month_data', JSON.stringify(responseJson[0]));",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/teacher/students/{{student_id}}/learning-activities/?year={{current_year}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "teacher", "students", "{{student_id}}", "learning-activities", ""],
+							"query": [
+								{
+									"key": "year",
+									"value": "{{current_year}}"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Student Learning Activities - Previous Year",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const previousYear = (new Date().getFullYear() - 1).toString();",
+									"pm.environment.set(\"previous_year\", previousYear);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/teacher/students/{{student_id}}/learning-activities/?year={{previous_year}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "teacher", "students", "{{student_id}}", "learning-activities", ""],
+							"query": [
+								{
+									"key": "year",
+									"value": "{{previous_year}}"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Student Learning Activities - No Year Parameter",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Should default to current year",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response is an array\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.be.an('array');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/teacher/students/{{student_id}}/learning-activities/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "teacher", "students", "{{student_id}}", "learning-activities", ""]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Student Attendance Reports",
+			"item": [
+				{
+					"name": "Get Student Attendance - Current Year",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response is an array\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.be.an('array');",
+									"});",
+									"",
+									"pm.test(\"Each item has required attendance fields\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    if (responseJson.length > 0) {",
+									"        responseJson.forEach(item => {",
+									"            pm.expect(item).to.have.property('month');",
+									"            pm.expect(item).to.have.property('total_days');",
+									"            pm.expect(item).to.have.property('present_days');",
+									"            pm.expect(item).to.have.property('late_days');",
+									"            pm.expect(item).to.have.property('absent_days');",
+									"            pm.expect(item).to.have.property('attendance_rate');",
+									"        });",
+									"    }",
+									"});",
+									"",
+									"// Validate attendance rate calculation",
+									"pm.test(\"Attendance rate is correctly calculated\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    if (responseJson.length > 0) {",
+									"        responseJson.forEach(item => {",
+									"            if (item.total_days > 0) {",
+									"                const expectedRate = (item.present_days / item.total_days) * 100;",
+									"                pm.expect(Math.abs(item.attendance_rate - expectedRate)).to.be.below(0.01);",
+									"            }",
+									"        });",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/teacher/students/{{student_id}}/attendance/?year={{current_year}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "teacher", "students", "{{student_id}}", "attendance", ""],
+							"query": [
+								{
+									"key": "year",
+									"value": "{{current_year}}"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Student Attendance - Previous Year",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/teacher/students/{{student_id}}/attendance/?year={{previous_year}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "teacher", "students", "{{student_id}}", "attendance", ""],
+							"query": [
+								{
+									"key": "year",
+									"value": "{{previous_year}}"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Student Attendance - No Year Parameter",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Should default to current year",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response is an array\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.be.an('array');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/teacher/students/{{student_id}}/attendance/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "teacher", "students", "{{student_id}}", "attendance", ""]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Access Control & Error Cases",
+			"item": [
+				{
+					"name": "Get Reports for Student Not Assigned to Teacher",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 403 or 404\", function () {",
+									"    pm.expect([403, 404]).to.include(pm.response.code);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/teacher/students/9999/learning-activities/?year={{current_year}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "teacher", "students", "9999", "learning-activities", ""],
+							"query": [
+								{
+									"key": "year",
+									"value": "{{current_year}}"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Reports without Authentication",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/teacher/students/{{student_id}}/learning-activities/?year={{current_year}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "teacher", "students", "{{student_id}}", "learning-activities", ""],
+							"query": [
+								{
+									"key": "year",
+									"value": "{{current_year}}"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Reports with Parent Token (Should Fail)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 403\", function () {",
+									"    pm.response.to.have.status(403);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{parent_access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/teacher/students/{{student_id}}/learning-activities/?year={{current_year}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "teacher", "students", "{{student_id}}", "learning-activities", ""],
+							"query": [
+								{
+									"key": "year",
+									"value": "{{current_year}}"
+								}
+							]
+						}
+					}
+				}
+			]
+		}
+	]
+}
