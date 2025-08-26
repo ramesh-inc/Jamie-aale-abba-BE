@@ -255,40 +255,32 @@ const LearningActivitiesChart: React.FC<LearningActivitiesChartProps> = ({
                 <div className="flex items-end justify-between h-full space-x-2 relative z-10">
                   {chartData.map((data, index) => (
                     <div key={index} className="flex-1 flex flex-col items-center">
-                      {/* Bar Container */}
-                      <div className="flex items-end justify-center h-full">
+                      {/* Bar Container with fixed height */}
+                      <div className="flex items-end justify-center" style={{ height: '280px' }}>
                         {/* Learning Hours Bar */}
-                        <div 
-                          className={`relative group w-12 flex justify-center ${
-                            data.hours > 0 ? 'cursor-pointer' : ''
-                          }`}
-                          onClick={() => handleBarClick(data, index)}
-                        >
-                          <div
-                            className={`w-8 border border-blue-600 transition-colors ${
-                              data.hours > 0 
-                                ? 'bg-blue-500 hover:bg-blue-600' 
-                                : 'bg-transparent'
-                            }`}
-                            style={{
-                              height: data.hours > 0 ? `${Math.max((data.hours / yAxisMax) * 100, 5)}%` : '2px',
-                              minHeight: data.hours > 0 ? '8px' : '2px',
-                              backgroundColor: data.hours > 0 ? '#3b82f6' : 'transparent'
-                            }}
-                            title={`${data.month}: ${data.hours} hours${data.hours > 0 ? ' - Click for details' : ''}`}
+                        {data.hours > 0 && (
+                          <div 
+                            className="relative group w-12 flex justify-center cursor-pointer"
+                            onClick={() => handleBarClick(data, index)}
                           >
-                            {/* Show value on top of bar */}
-                            {data.hours > 0 && (
-                              <div className="absolute -top-5 left-1/2 transform -translate-x-1/2 text-xs text-gray-700 font-bold">
-                                {data.hours}
+                            {/* Show value above bar */}
+                            <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 text-xs text-gray-700 font-bold">
+                              {data.hours}
+                            </div>
+                            <div
+                              className="w-8 bg-blue-500 hover:bg-blue-600 border border-blue-600 transition-colors"
+                              style={{
+                                height: `${(data.hours / yAxisMax) * 280}px`
+                              }}
+                              title={`${data.month}: ${data.hours} hours - Click for details`}
+                            >
+                              {/* Tooltip */}
+                              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-20">
+                                {data.hours} hours
                               </div>
-                            )}
-                            {/* Tooltip */}
-                            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-20">
-                              {data.hours} hours
                             </div>
                           </div>
-                        </div>
+                        )}
                       </div>
                       
                       {/* Month Label directly below bar */}

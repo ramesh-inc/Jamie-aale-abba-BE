@@ -241,79 +241,73 @@ const AttendanceChart: React.FC<AttendanceChartProps> = ({
                 <div className="flex items-end justify-between h-full space-x-2 relative z-10">
                   {chartData.map((data, index) => (
                     <div key={index} className="flex-1 flex flex-col items-center">
-                      {/* Bars Container */}
-                      <div className="flex items-end justify-center space-x-1 h-full">
+                      {/* Bars Container with fixed height */}
+                      <div className="flex items-end justify-center space-x-1" style={{ height: '280px' }}>
                         {/* Present Bar */}
-                        <div className="relative group">
-                          <div
-                            className="bg-green-500 hover:bg-green-600 transition-colors w-4 border border-green-600"
-                            style={{
-                              height: data.present > 0 ? `${Math.max((data.present / yAxisMax) * 100, 5)}%` : '2px',
-                              minHeight: data.present > 0 ? '8px' : '2px',
-                              backgroundColor: data.present > 0 ? '#10b981' : 'transparent'
-                            }}
-                            title={`Present: ${data.present} days`}
-                          >
-                            {/* Show value on top of bar for debugging */}
-                            {data.present > 0 && (
-                              <div className="absolute -top-5 left-1/2 transform -translate-x-1/2 text-xs text-gray-700 font-bold">
-                                {data.present}
+                        {data.present > 0 && (
+                          <div className="relative group">
+                            {/* Show value above bar */}
+                            <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 text-xs text-gray-700 font-bold">
+                              {data.present}
+                            </div>
+                            <div
+                              className="bg-green-500 hover:bg-green-600 transition-colors w-4 border border-green-600"
+                              style={{
+                                height: `${(data.present / yAxisMax) * 280}px`
+                              }}
+                              title={`Present: ${data.present} days`}
+                            >
+                              {/* Tooltip */}
+                              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-20">
+                                Present: {data.present}
                               </div>
-                            )}
-                            {/* Tooltip */}
-                            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-20">
-                              Present: {data.present}
                             </div>
                           </div>
-                        </div>
+                        )}
 
                         {/* Absent Bar */}
-                        <div className="relative group">
-                          <div
-                            className="bg-red-500 hover:bg-red-600 transition-colors w-4 border border-red-600"
-                            style={{
-                              height: data.absent > 0 ? `${Math.max((data.absent / yAxisMax) * 100, 5)}%` : '2px',
-                              minHeight: data.absent > 0 ? '8px' : '2px',
-                              backgroundColor: data.absent > 0 ? '#ef4444' : 'transparent'
-                            }}
-                            title={`Absent: ${data.absent} days`}
-                          >
-                            {/* Show value on top of bar for debugging */}
-                            {data.absent > 0 && (
-                              <div className="absolute -top-5 left-1/2 transform -translate-x-1/2 text-xs text-gray-700 font-bold">
-                                {data.absent}
+                        {data.absent > 0 && (
+                          <div className="relative group">
+                            {/* Show value above bar */}
+                            <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 text-xs text-gray-700 font-bold">
+                              {data.absent}
+                            </div>
+                            <div
+                              className="bg-red-500 hover:bg-red-600 transition-colors w-4 border border-red-600"
+                              style={{
+                                height: `${(data.absent / yAxisMax) * 280}px`
+                              }}
+                              title={`Absent: ${data.absent} days`}
+                            >
+                              {/* Tooltip */}
+                              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-20">
+                                Absent: {data.absent}
                               </div>
-                            )}
-                            {/* Tooltip */}
-                            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-20">
-                              Absent: {data.absent}
                             </div>
                           </div>
-                        </div>
+                        )}
 
                         {/* Late Bar */}
-                        <div className="relative group">
-                          <div
-                            className="bg-yellow-500 hover:bg-yellow-600 transition-colors w-4 border border-yellow-600"
-                            style={{
-                              height: data.late > 0 ? `${Math.max((data.late / yAxisMax) * 100, 5)}%` : '2px',
-                              minHeight: data.late > 0 ? '8px' : '2px',
-                              backgroundColor: data.late > 0 ? '#eab308' : 'transparent'
-                            }}
-                            title={`Late: ${data.late} days`}
-                          >
-                            {/* Show value on top of bar for debugging */}
-                            {data.late > 0 && (
-                              <div className="absolute -top-5 left-1/2 transform -translate-x-1/2 text-xs text-gray-700 font-bold">
-                                {data.late}
+                        {data.late > 0 && (
+                          <div className="relative group">
+                            {/* Show value above bar */}
+                            <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 text-xs text-gray-700 font-bold">
+                              {data.late}
+                            </div>
+                            <div
+                              className="bg-yellow-500 hover:bg-yellow-600 transition-colors w-4 border border-yellow-600"
+                              style={{
+                                height: `${(data.late / yAxisMax) * 280}px`
+                              }}
+                              title={`Late: ${data.late} days`}
+                            >
+                              {/* Tooltip */}
+                              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-20">
+                                Late: {data.late}
                               </div>
-                            )}
-                            {/* Tooltip */}
-                            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-20">
-                              Late: {data.late}
                             </div>
                           </div>
-                        </div>
+                        )}
                       </div>
                       
                       {/* Month Label directly below bars */}
