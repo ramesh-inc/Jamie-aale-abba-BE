@@ -4,6 +4,8 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.db.models import Q, Sum, Count
 from datetime import datetime, timedelta
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 from core.models import Student, Parent, ParentStudentRelationship, Class, StudentLearningRecord, LearningActivity
 from .parent_child_serializers import (
     ChildDetailSerializer, ChildListSerializer, AddChildSerializer,
@@ -118,6 +120,38 @@ class ChildDetailView(generics.RetrieveUpdateAPIView):
         })
 
 
+@swagger_auto_schema(
+    method='get',
+    operation_description="Get list of available classes for parent enrollment requests",
+    operation_summary="Get available classes for enrollment",
+    tags=['Parent - Classes'],
+    security=[{'Bearer': []}],
+    responses={
+        200: openapi.Response(
+            description="Successfully retrieved available classes",
+            examples={
+                "application/json": {
+                    "success": True,
+                    "data": [
+                        {
+                            "id": 1,
+                            "class_name": "Nursery A",
+                            "class_code": "NA001",
+                            "age_group": "3-4 years",
+                            "capacity": 20,
+                            "current_enrollment": 15,
+                            "available_spots": 5,
+                            "academic_year": "2024"
+                        }
+                    ]
+                }
+            }
+        ),
+        403: openapi.Response(description="Only parents can access this endpoint"),
+        404: openapi.Response(description="Parent profile not found"),
+        500: openapi.Response(description="Internal server error")
+    }
+)
 @api_view(['GET'])
 @permission_classes([IsAuthenticated, IsParentUser])
 def get_available_classes(request):

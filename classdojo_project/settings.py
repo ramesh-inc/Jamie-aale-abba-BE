@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
+    'drf_yasg',
     'core'
 ]
 
@@ -210,3 +211,19 @@ else:
 
 DEFAULT_FROM_EMAIL = 'ClassDojo Nursery <noreply@classdojo-nursery.com>'
 FRONTEND_URL = 'http://localhost:5174'  # React frontend URL
+
+# Swagger Settings
+SWAGGER_SETTINGS = {
+    'SECURITY_DEFINITIONS': {
+        'Bearer': {
+            'type': 'apiKey',
+            'name': 'Authorization',
+            'in': 'header',
+            'description': 'JWT authorization header using the Bearer scheme. Example: "Authorization: Bearer {token}"'
+        }
+    },
+    'USE_SESSION_AUTH': False,
+    'VALIDATOR_URL': None,
+    'AUTO_SCHEMA_TITLE': 'ClassDojo Nursery Management API',
+    'AUTO_SCHEMA_DESCRIPTION': 'API for managing nursery operations including authentication, class management, attendance, and learning activities.',
+}

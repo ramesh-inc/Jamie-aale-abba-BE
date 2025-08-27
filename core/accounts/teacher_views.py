@@ -7,11 +7,48 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from django.db.models import Count, Q
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 from core.models import Teacher, Class, ClassTeacherAssignment, Student, ClassStudentEnrollment, DailyAttendance, LearningActivity, ClassLearningSession, StudentLearningRecord, ParentStudentRelationship, Parent
 from .permissions import IsTeacherUser
 from datetime import datetime
 
 
+@swagger_auto_schema(
+    method='get',
+    operation_description="Retrieve classes assigned to the authenticated teacher",
+    operation_summary="Get teacher's assigned classes",
+    tags=['Teacher - Classes'],
+    security=[{'Bearer': []}],
+    responses={
+        200: openapi.Response(
+            description="Successfully retrieved teacher's classes",
+            examples={
+                "application/json": {
+                    "success": True,
+                    "data": [
+                        {
+                            "id": 1,
+                            "class_name": "Nursery A",
+                            "class_code": "NA001",
+                            "age_group": "3-4 years",
+                            "capacity": 20,
+                            "room_number": "101",
+                            "academic_year": "2024",
+                            "student_count": 15,
+                            "is_active": True,
+                            "created_at": "2024-01-15T10:30:00Z"
+                        }
+                    ],
+                    "count": 1
+                }
+            }
+        ),
+        403: openapi.Response(description="Only teachers can access this endpoint"),
+        404: openapi.Response(description="Teacher profile not found"),
+        500: openapi.Response(description="Internal server error")
+    }
+)
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_teacher_classes(request):
@@ -76,6 +113,50 @@ def get_teacher_classes(request):
         )
 
 
+@swagger_auto_schema(
+    method='get',
+    operation_description="Retrieve students in a specific class that the teacher is assigned to",
+    operation_summary="Get students in a teacher's class",
+    tags=['Teacher - Classes'],
+    security=[{'Bearer': []}],
+    manual_parameters=[
+        openapi.Parameter(
+            'class_id',
+            openapi.IN_PATH,
+            description="ID of the class to get students for",
+            type=openapi.TYPE_INTEGER,
+            required=True
+        )
+    ],
+    responses={
+        200: openapi.Response(
+            description="Successfully retrieved class students",
+            examples={
+                "application/json": {
+                    "success": True,
+                    "data": [
+                        {
+                            "id": 1,
+                            "first_name": "John",
+                            "last_name": "Doe",
+                            "date_of_birth": "2020-05-15",
+                            "enrollment_date": "2024-01-15",
+                            "is_active": True
+                        }
+                    ],
+                    "class": {
+                        "id": 1,
+                        "class_name": "Nursery A",
+                        "class_code": "NA001"
+                    }
+                }
+            }
+        ),
+        403: openapi.Response(description="Only teachers can access this endpoint or teacher not assigned to this class"),
+        404: openapi.Response(description="Teacher profile or class not found"),
+        500: openapi.Response(description="Internal server error")
+    }
+)
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_class_students(request, class_id):
@@ -162,6 +243,68 @@ def get_class_students(request, class_id):
         )
 
 
+@swagger_auto_schema(
+    method='post',
+    operation_description="Mark attendance for students in a class",
+    operation_summary="Mark student attendance",
+    tags=['Teacher - Attendance'],
+    security=[{'Bearer': []}],
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        required=['class_id', 'date', 'attendance_records'],
+        properties={
+            'class_id': openapi.Schema(
+                type=openapi.TYPE_INTEGER,
+                description='ID of the class'
+            ),
+            'date': openapi.Schema(
+                type=openapi.TYPE_STRING,
+                format='date',
+                description='Date for attendance (YYYY-MM-DD)',
+                example='2024-01-15'
+            ),
+            'attendance_records': openapi.Schema(
+                type=openapi.TYPE_ARRAY,
+                description='List of student attendance records',
+                items=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'student_id': openapi.Schema(type=openapi.TYPE_INTEGER, description='Student ID'),
+                        'status': openapi.Schema(
+                            type=openapi.TYPE_STRING,
+                            enum=['present', 'absent', 'late'],
+                            description='Attendance status'
+                        ),
+                        'notes': openapi.Schema(type=openapi.TYPE_STRING, description='Optional notes')
+                    }
+                )
+            )
+        }
+    ),
+    responses={
+        201: openapi.Response(
+            description="Attendance marked successfully",
+            examples={
+                "application/json": {
+                    "success": True,
+                    "message": "Attendance marked successfully",
+                    "attendance_records": [
+                        {
+                            "student_id": 1,
+                            "student_name": "John Doe",
+                            "status": "present",
+                            "notes": ""
+                        }
+                    ]
+                }
+            }
+        ),
+        400: openapi.Response(description="Invalid request data"),
+        403: openapi.Response(description="Only teachers can access this endpoint or teacher not assigned to class"),
+        404: openapi.Response(description="Teacher profile or class not found"),
+        500: openapi.Response(description="Internal server error")
+    }
+)
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def mark_attendance(request):

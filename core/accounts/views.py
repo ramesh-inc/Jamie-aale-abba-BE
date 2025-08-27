@@ -255,6 +255,23 @@ class ResendVerificationView(APIView):
 
 
 # Health Check
+@swagger_auto_schema(
+    method='get',
+    operation_description="Health check endpoint to verify API availability",
+    operation_summary="API Health Check",
+    tags=['System'],
+    responses={
+        200: openapi.Response(
+            description="API is healthy and operational",
+            examples={
+                "application/json": {
+                    "status": "healthy",
+                    "timestamp": "2024-01-15T10:30:00Z"
+                }
+            }
+        )
+    }
+)
 @csrf_exempt
 @api_view(['GET'])
 @permission_classes([permissions.AllowAny])

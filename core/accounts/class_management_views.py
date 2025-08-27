@@ -4,6 +4,8 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.db.models import Q, Count
 from django.utils import timezone
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 from core.models import (
     Class, Student, Teacher, ClassStudentEnrollment,
     ClassTeacherAssignment, User
@@ -173,6 +175,48 @@ class TeacherStudentAssignmentView(generics.ListAPIView):
         return queryset
 
 
+@swagger_auto_schema(
+    method='post',
+    operation_description="Assign multiple students to a teacher and class",
+    operation_summary="Assign students to teacher",
+    tags=['Admin - Class Management'],
+    security=[{'Bearer': []}],
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        required=['teacher_id', 'class_id', 'student_ids'],
+        properties={
+            'teacher_id': openapi.Schema(
+                type=openapi.TYPE_INTEGER,
+                description='ID of the teacher'
+            ),
+            'class_id': openapi.Schema(
+                type=openapi.TYPE_INTEGER,
+                description='ID of the class'
+            ),
+            'student_ids': openapi.Schema(
+                type=openapi.TYPE_ARRAY,
+                description='List of student IDs to assign',
+                items=openapi.Schema(type=openapi.TYPE_INTEGER)
+            )
+        }
+    ),
+    responses={
+        200: openapi.Response(
+            description="Students assigned successfully",
+            examples={
+                "application/json": {
+                    "success": True,
+                    "message": "3 students assigned to teacher successfully",
+                    "assigned_students": [1, 2, 3]
+                }
+            }
+        ),
+        400: openapi.Response(description="Invalid request data"),
+        403: openapi.Response(description="Only admins can assign students to teachers"),
+        404: openapi.Response(description="Teacher or class not found"),
+        500: openapi.Response(description="Internal server error")
+    }
+)
 @api_view(['POST'])
 @permission_classes([IsAuthenticated, IsAdminUser])
 def assign_students_to_teacher(request):
