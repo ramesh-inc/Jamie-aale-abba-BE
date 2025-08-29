@@ -8,7 +8,8 @@ logger = logging.getLogger(__name__)
 def send_verification_email(user):
     """Send email verification email to user"""
     try:
-        verification_url = f"http://localhost:5173/verify-email/{user.email_verification_token}"
+        frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:5174')
+        verification_url = f"{frontend_url}/verify-email/{user.email_verification_token}"
         
         message = f"""
 Hi {user.first_name},
