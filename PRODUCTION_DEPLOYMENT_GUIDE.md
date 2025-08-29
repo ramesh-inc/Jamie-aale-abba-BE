@@ -1450,31 +1450,224 @@ if [ "$DISK_USAGE" -gt 85 ]; then
 fi
 ```
 
-#### Automated Backup Setup
+### How to Initiate Backup Process
 
-**Install and Configure:**
+#### Step-by-Step Backup Automation Setup
+
+**Step 1: Install Prerequisites**
 ```bash
-# 1. Create scripts directory
+# Install mail utilities for notifications
+sudo apt update
+sudo apt install mailutils
+
+# Test mail functionality
+echo "Test email" | mail -s "Mail Test" admin@jamiaaaleabba.co.uk
+```
+
+**Step 2: Prepare Backup Environment**
+```bash
+# Create backup directories
+sudo mkdir -p /backups/jamie-aale-abba/{database/{daily,weekly,monthly},media/{daily,weekly},logs,daily}
+sudo chown $USER:$USER /backups/jamie-aale-abba
+chmod 755 /backups/jamie-aale-abba
+
+# Create scripts directory
 sudo mkdir -p /home/scripts
 sudo chown $USER:$USER /home/scripts
+```
 
-# 2. Copy backup script
-sudo cp backup_jamie_aale_abba.sh /home/scripts/
-chmod +x /home/scripts/backup_jamie_aale_abba.sh
+**Step 3: Configure and Install Backup Scripts**
+```bash
+# Navigate to your application directory
+cd /var/www/jamie-aale-abba
 
-# 3. Set up cron jobs
+# Make backup scripts executable
+chmod +x backup_scripts/*.sh
+
+# Copy main backup script to system scripts directory
+cp backup_scripts/backup_jamie_aale_abba.sh /home/scripts/
+cp backup_scripts/backup_health_check.sh /home/scripts/
+
+# Ensure scripts are executable
+chmod +x /home/scripts/*.sh
+```
+
+**Step 4: Configure Script Settings**
+```bash
+# Edit the main backup script with your settings
+nano /home/scripts/backup_jamie_aale_abba.sh
+
+# Update these critical settings:
+# - DB_PASSWORD="your-actual-database-password"
+# - ADMIN_EMAIL="your-admin-email@jamiaaaleabba.co.uk"
+# - Verify database credentials match your production setup
+```
+
+**Step 5: Test Backup Script (Important!)**
+```bash
+# Run backup script manually first to ensure it works
+/home/scripts/backup_jamie_aale_abba.sh
+
+# Check if backup was created successfully
+ls -la /backups/jamie-aale-abba/database/daily/
+ls -la /backups/jamie-aale-abba/logs/
+
+# Verify log file for any errors
+tail -f /backups/jamie-aale-abba/logs/backup_$(date +%Y%m%d).log
+```
+
+**Step 6: Set Up Automated Scheduling (Cron Jobs)**
+```bash
+# Open crontab editor
 crontab -e
 
-# Add the following lines:
+# Add the following lines to automate backups:
 # Daily backup at 3:00 AM
-0 3 * * * /home/scripts/backup_jamie_aale_abba.sh
+0 3 * * * /home/scripts/backup_jamie_aale_abba.sh >> /var/log/backup_cron.log 2>&1
 
 # Backup health check at 8:00 AM
-0 8 * * * /home/scripts/backup_health_check.sh
+0 8 * * * /home/scripts/backup_health_check.sh >> /var/log/backup_health_cron.log 2>&1
 
-# 4. Install mail utilities (for notifications)
-sudo apt install mailutils
+# Save and exit the editor (Ctrl+X, then Y, then Enter)
 ```
+
+**Step 7: Verify Cron Jobs Are Active**
+```bash
+# List current cron jobs to confirm they were added
+crontab -l
+
+# Check cron service is running
+sudo systemctl status cron
+
+# Check cron logs (wait until scheduled time or check next day)
+sudo tail -f /var/log/syslog | grep backup_jamie_aale_abba
+```
+
+#### For cPanel Hosting Environments
+
+**cPanel-Specific Setup:**
+
+**Step 1: Upload and Configure**
+```bash
+# Upload cpanel_backup.sh to your cPanel account
+# Location: /home/[username]/scripts/cpanel_backup.sh
+
+# Make it executable
+chmod +x /home/[username]/scripts/cpanel_backup.sh
+
+# Edit the script with your cPanel details:
+nano /home/[username]/scripts/cpanel_backup.sh
+# Update: CPANEL_USERNAME, DB_PASSWORD
+```
+
+**Step 2: Set Up cPanel Cron Jobs**
+```bash
+# In cPanel → Cron Jobs, add these:
+
+# Daily backup at 3:00 AM
+0 3 * * * /home/[username]/scripts/cpanel_backup.sh >> /home/[username]/logs/backup.log 2>&1
+
+# Weekly cleanup every Sunday at 2:00 AM  
+0 2 * * 0 find /home/[username]/backups -name "*.gz" -mtime +14 -delete
+```
+
+#### Backup Process Verification
+
+**Check Backup Automation Status:**
+```bash
+# 1. Verify cron jobs are scheduled
+crontab -l
+
+# 2. Check if backup directories exist
+ls -la /backups/jamie-aale-abba/
+
+# 3. Test manual backup execution
+/home/scripts/backup_jamie_aale_abba.sh
+
+# 4. Monitor first automated backup (check next day)
+ls -la /backups/jamie-aale-abba/database/daily/
+
+# 5. Review backup logs
+cat /backups/jamie-aale-abba/logs/backup_$(date +%Y%m%d).log
+```
+
+**Monitor Backup Health:**
+```bash
+# Run health check manually
+/home/scripts/backup_health_check.sh
+
+# Check for email notifications
+# (You should receive emails for backup success/failure)
+
+# View backup sizes and verify they're reasonable
+du -sh /backups/jamie-aale-abba/*
+```
+
+#### Important Notes
+
+🔥 **Critical Configuration Steps:**
+1. **Always test manually first** before scheduling
+2. **Update database credentials** in backup scripts
+3. **Verify email notifications work** before going live
+4. **Check disk space** regularly for backup storage
+
+⚡ **No Manual Execution Required:**
+- Once cron jobs are set up, backups run **automatically**
+- **No need to manually execute** scripts daily
+- **Manual execution** only needed for testing or emergency backups
+
+🛡️ **Backup Security:**
+```bash
+# Secure backup scripts (recommended)
+chmod 700 /home/scripts/backup_jamie_aale_abba.sh
+chmod 700 /backups/jamie-aale-abba
+
+# Limit access to backup directories
+sudo chown root:backup /backups/jamie-aale-abba
+sudo chmod 750 /backups/jamie-aale-abba
+```
+
+#### Troubleshooting Backup Automation
+
+**Common Setup Issues:**
+
+1. **Cron job not running:**
+   ```bash
+   # Check cron service
+   sudo systemctl restart cron
+   sudo systemctl status cron
+   ```
+
+2. **Permission errors:**
+   ```bash
+   # Fix script permissions
+   chmod +x /home/scripts/*.sh
+   # Fix directory permissions
+   sudo chown -R $USER:$USER /backups/jamie-aale-abba
+   ```
+
+3. **Database connection fails:**
+   ```bash
+   # Test database connection manually
+   mysql -u classdojo_prod_user -p -e "SELECT 1;"
+   # Update credentials in backup script if needed
+   ```
+
+4. **Email notifications not working:**
+   ```bash
+   # Install mail utilities
+   sudo apt install mailutils
+   # Test mail command
+   echo "Test" | mail -s "Test" admin@jamiaaaleabba.co.uk
+   ```
+
+5. **Backup files not created:**
+   ```bash
+   # Check disk space
+   df -h /backups
+   # Check script logs
+   cat /backups/jamie-aale-abba/logs/backup_*.log
+   ```
 
 This comprehensive backup strategy provides multiple layers of protection with automated scheduling, verification, and monitoring for your Jamie Aale Abba application.
 
