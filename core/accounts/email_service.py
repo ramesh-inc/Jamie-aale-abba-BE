@@ -21,13 +21,13 @@ Please verify your email address by clicking the link below:
 This link will expire in 24 hours.
 
 Thanks,
-ClassDojo Team
+Jamie Aale Abba - LMS Team
         """.strip()
         
         send_mail(
-            subject='Verify Your ClassDojo Account',
+            subject='Verify Your Jamie Aale Abba - LMS Account',
             message=message,
-            from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@classdojo.com'),
+            from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@jamiaaaleabba.co.uk'),
             recipient_list=[user.email],
             fail_silently=False,
         )
@@ -44,18 +44,18 @@ def send_welcome_email(user):
     """Send welcome email after verification"""
     try:
         message = f"""
-Welcome to ClassDojo, {user.first_name}!
+Welcome to Jamie Aale Abba - LMS, {user.first_name}!
 
-Your account has been successfully verified. You can now log in and start using ClassDojo.
+Your account has been successfully verified. You can now log in and start using Jamie Aale Abba - LMS.
 
 Thanks,
-ClassDojo Team
+Jamie Aale Abba - LMS Team
         """.strip()
         
         send_mail(
-            subject='Welcome to ClassDojo!',
+            subject='Welcome to Jamie Aale Abba - LMS!',
             message=message,
-            from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@classdojo.com'),
+            from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@jamiaaaleabba.co.uk'),
             recipient_list=[user.email],
             fail_silently=True,  # Don't fail if welcome email fails
         )
@@ -76,7 +76,7 @@ def send_password_reset_email(user):
         message = f"""
 Hi {user.first_name},
 
-We received a request to reset your password for your ClassDojo account.
+We received a request to reset your password for your Jamie Aale Abba - LMS account.
 
 Please click the link below to reset your password:
 
@@ -87,13 +87,13 @@ This link will expire in 1 hour for security reasons.
 If you didn't request a password reset, you can safely ignore this email.
 
 Thanks,
-ClassDojo Team
+Jamie Aale Abba - LMS Team
         """.strip()
         
         send_mail(
-            subject='Reset Your ClassDojo Password',
+            subject='Reset Your Jamie Aale Abba - LMS Password',
             message=message,
-            from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@classdojo.com'),
+            from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@jamiaaaleabba.co.uk'),
             recipient_list=[user.email],
             fail_silently=False,
         )

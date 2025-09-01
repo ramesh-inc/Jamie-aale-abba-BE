@@ -1,5 +1,5 @@
 """
-URL configuration for classdojo_project project.
+URL configuration for JAALMS_project project.
 
 The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/5.2/topics/http/urls/
@@ -24,11 +24,11 @@ from drf_yasg import openapi
 
 schema_view = get_schema_view(
    openapi.Info(
-      title="ClassDojo Nursery Management API",
+      title="Jamie Aale Abba Nursery Management API",
       default_version='v1',
       description="API for managing nursery operations including authentication, class management, attendance, and learning activities.",
       terms_of_service="https://www.google.com/policies/terms/",
-      contact=openapi.Contact(email="support@classdojo-nursery.com"),
+      contact=openapi.Contact(email="support@jamiaaaleabba.co.uk"),
       license=openapi.License(name="MIT License"),
    ),
    public=True,

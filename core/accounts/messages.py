@@ -27,9 +27,9 @@ REGISTRATION_MESSAGES = {
     'invalid_name': 'Name can only contain letters and spaces.',
 
     # Email subject lines
-    'email_verification_subject': 'Verify your ClassDojo account',
-    'welcome_subject': 'Welcome to ClassDojo!',
-    'password_reset_subject': 'Reset your ClassDojo password',
+    'email_verification_subject': 'Verify your Jamie Aale Abba - LMS account',
+    'welcome_subject': 'Welcome to Jamie Aale Abba - LMS!',
+    'password_reset_subject': 'Reset your Jamie Aale Abba - LMS password',
 }
 
 # Authentication Messages

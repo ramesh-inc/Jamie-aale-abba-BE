@@ -1,4 +1,4 @@
-# ClassDojo SAAS - Nursery Management Platform
+# Jamie Aale Abba - LMS SAAS - Nursery Management Platform
 
 A full-stack web application for managing nursery operations, featuring a Django REST API backend and React.js frontend. The platform enables parents, teachers, and administrators to manage students, track activities, communicate, and monitor learning progress.
 

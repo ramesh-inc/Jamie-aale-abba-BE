@@ -137,7 +137,7 @@ class Command(BaseCommand):
 
         context = {
             'user': {'first_name': 'Test', 'email': recipient},
-            'site_name': 'ClassDojo Nursery',
+            'site_name': 'Jamie Aale Abba - LMS',
             'message': 'This is a test email to verify your email configuration.'
         }
 

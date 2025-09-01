@@ -280,7 +280,7 @@ def send_verification_email_task(user_id, token, user_email, user_name):
     try:
         verification_url = f"{settings.FRONTEND_URL}/verify-email/{token}"
 
-        subject = "Verify your ClassDojo account"
+        subject = "Verify your Jamie Aale Abba - LMS account"
         html_message = render_to_string('emails/verification_email.html', {
             'user_name': user_name,
             'verification_url': verification_url,
@@ -311,7 +311,7 @@ def send_password_reset_email_task(user_id, token, user_email, user_name):
     try:
         reset_url = f"{settings.FRONTEND_URL}/reset-password/{token}"
 
-        subject = "Reset your ClassDojo password"
+        subject = "Reset your Jamie Aale Abba - LMS password"
         html_message = render_to_string('emails/password_reset_email.html', {
             'user_name': user_name,
             'reset_url': reset_url,
@@ -340,7 +340,7 @@ def send_password_reset_email_task(user_id, token, user_email, user_name):
 def send_welcome_email_task(user_id, user_email, user_name):
     """Async task to send welcome email after email verification"""
     try:
-        subject = "Welcome to ClassDojo!"
+        subject = "Welcome to Jamie Aale Abba - LMS!"
         html_message = render_to_string('emails/welcome_email.html', {
             'user_name': user_name,
             'dashboard_url': f"{settings.FRONTEND_URL}/dashboard",
