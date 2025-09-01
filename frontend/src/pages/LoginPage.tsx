@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { loginUser } from '../services/api';
+import { loginUser, resendVerification } from '../services/api';
 import type { LoginData, LoginResponse } from '../types/auth';
 import FormField from '../components/ui/FormField';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
@@ -15,10 +15,40 @@ const LoginPage: React.FC = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [isResendingVerification, setIsResendingVerification] = useState(false);
+  const [resendMessage, setResendMessage] = useState('');
 
   const handleUserTypeSelect = (userType: 'parent' | 'teacher') => {
     setFormData(prev => ({ ...prev, user_type: userType }));
     setErrors({});
+    setResendMessage('');
+  };
+
+  const handleResendVerification = async () => {
+    if (!formData.email) {
+      setErrors({ general: 'Please enter your email address first.' });
+      return;
+    }
+
+    setIsResendingVerification(true);
+    setResendMessage('');
+    setErrors({});
+
+    try {
+      await resendVerification(formData.email);
+      setResendMessage('Verification email sent! Please check your inbox and spam folder.');
+    } catch (error: unknown) {
+      console.error('Resend verification error:', error);
+      const errorData = (error as any)?.response?.data;
+      
+      if (errorData?.error) {
+        setErrors({ general: errorData.error });
+      } else {
+        setErrors({ general: 'Failed to send verification email. Please try again.' });
+      }
+    } finally {
+      setIsResendingVerification(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -29,12 +59,18 @@ const LoginPage: React.FC = () => {
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
+    
+    // Clear resend message when user changes input
+    if (resendMessage) {
+      setResendMessage('');
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setErrors({});
+    setResendMessage('');
 
     try {
       const response: LoginResponse = await loginUser(formData);
@@ -160,6 +196,34 @@ const LoginPage: React.FC = () => {
                       )}
                     </div>
                   )}
+                  
+                  {/* Show resend verification button for email verification errors */}
+                  {errors.general?.includes('verify your email') && (
+                    <div className="mt-3">
+                      <button
+                        type="button"
+                        onClick={handleResendVerification}
+                        disabled={isResendingVerification}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg transition-colors text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                      >
+                        {isResendingVerification ? (
+                          <>
+                            <LoadingSpinner size="sm" />
+                            <span className="ml-2">Sending...</span>
+                          </>
+                        ) : (
+                          'Resend Verification Email'
+                        )}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Success Message for Resend Verification */}
+              {resendMessage && (
+                <div className="bg-green-50 border-l-4 border-green-400 p-4 rounded">
+                  <p className="text-green-800 text-sm">{resendMessage}</p>
                 </div>
               )}
 
