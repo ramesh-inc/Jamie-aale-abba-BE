@@ -25,9 +25,9 @@ const TeacherDashboardPage: React.FC = () => {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center mr-3">
-                <img src="/src/assets/logo.png" alt="ClassDojo Nursery" className="w-6 h-6" />
+                <img src="/src/assets/logo.png" alt="Jamie Aale Abba - LMS" className="w-6 h-6" />
               </div>
-              <h1 className="text-xl font-semibold text-gray-800">ClassDojo Nursery - Teacher Portal</h1>
+              <h1 className="text-xl font-semibold text-gray-800">Jamie Aale Abba - Teacher Portal</h1>
             </div>
             
             <div className="flex items-center space-x-4">

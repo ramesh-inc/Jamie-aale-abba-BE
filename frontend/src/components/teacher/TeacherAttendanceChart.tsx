@@ -34,11 +34,6 @@ const TeacherAttendanceChart: React.FC<TeacherAttendanceChartProps> = ({
 
   const academicYears = generateAcademicYears();
 
-  // Month labels
-  const months = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-  ];
 
   useEffect(() => {
     if (selectedStudentId && selectedYear) {

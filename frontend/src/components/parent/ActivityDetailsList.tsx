@@ -12,6 +12,8 @@ interface ActivityDetail {
   notes?: string;
   teacher_name: string;
   participation_level: string;
+  learning_objectives?: string;
+  materials_used?: string;
 }
 
 interface ActivityDetailsListProps {
@@ -123,28 +125,7 @@ const ActivityDetailsList: React.FC<ActivityDetailsListProps> = ({
     }
   };
 
-  const getParticipationColor = (level: string) => {
-    switch (level) {
-      case 'excellent':
-        return 'text-green-600';
-      case 'good':
-        return 'text-blue-600';
-      case 'fair':
-        return 'text-yellow-600';
-      case 'needs_improvement':
-        return 'text-red-600';
-      default:
-        return 'text-gray-600';
-    }
-  };
 
-  const formatTime = (time: string) => {
-    return new Date(`2000-01-01T${time}`).toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    });
-  };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);

@@ -152,9 +152,6 @@ const AttendanceChart: React.FC<AttendanceChartProps> = ({
     yAxisMax = Math.ceil(maxValue * 1.1); // Large values: add 10% padding
   }
 
-  const getDefaultAvatar = (name: string) => {
-    return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=4F46E5&color=fff&size=40`;
-  };
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">

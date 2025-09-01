@@ -3,7 +3,6 @@ import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { adminApi } from '../../services/api';
-import type { ApiError } from '../../types/auth';
 import LoadingSpinner from '../ui/LoadingSpinner';
 
 const schema = yup.object({
@@ -68,7 +67,7 @@ export default function TeacherRegistrationForm({ onSuccess, onCancel }: Teacher
         // Handle various error response structures
         if (errorData.errors) {
           // Field-specific errors (object format)
-          const firstError = Object.values(errorData.errors)[0]?.[0];
+          const firstError = (Object.values(errorData.errors) as string[][])[0]?.[0];
           setSubmitError(firstError || 'Registration failed. Please check your information.');
         } else if (errorData.password) {
           // Password-specific errors (array format)

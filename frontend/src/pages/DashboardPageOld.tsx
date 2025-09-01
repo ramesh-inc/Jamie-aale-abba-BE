@@ -16,9 +16,9 @@ const DashboardPage: React.FC = () => {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <div className="w-10 h-10 bg-gradient-to-r from-brand-gold to-brand-green rounded-full flex items-center justify-center mr-3">
-                <img src="/src/assets/logo.png" alt="ClassDojo Nursery" className="w-6 h-6" />
+                <img src="/src/assets/logo.png" alt="JAA-LMS" className="w-6 h-6" />
               </div>
-              <h1 className="text-xl font-semibold text-gray-800">ClassDojo Nursery</h1>
+              <h1 className="text-xl font-semibold text-gray-800">Jamie Aale Abba - LMS</h1>
             </div>
             
             <div className="flex items-center space-x-4">

@@ -118,7 +118,7 @@ export const ParentRegistrationForm: React.FC<ParentRegistrationFormProps> = ({
           Create Parent Account
         </h1>
         <p className="text-gray-600">
-          Join ClassDojo to stay connected with your child's learning journey
+          Join Jamie Aale Abba - LMS to stay connected with your child's learning journey
         </p>
       </div>
 

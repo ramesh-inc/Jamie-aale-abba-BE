@@ -43,7 +43,7 @@ const RegistrationSuccessPage: React.FC = () => {
         <div className="bg-white rounded-xl shadow-lg p-8 text-center">
           {/* Logo */}
           <div className="w-20 h-20 bg-gradient-to-r rounded-full mx-auto mb-6 flex items-center justify-center">
-            <img src="/src/assets/logo.png" alt="ClassDojo Nursery" className="w-16 h-16" />
+            <img src="/src/assets/logo.png" alt="Jamie Aale Abba - LMS" className="w-16 h-16" />
           </div>
 
           {/* Success Icon */}
@@ -57,7 +57,7 @@ const RegistrationSuccessPage: React.FC = () => {
           <h1 className="text-3xl font-bold text-gray-800 mb-4">Registration Successful!</h1>
           
           <p className="text-gray-600 mb-6 text-lg">
-            Thank you for registering with ClassDojo! We've sent a verification email to:
+            Thank you for registering with Jamie Aale Abba - LMS! We've sent a verification email to:
           </p>
           
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
@@ -127,8 +127,8 @@ const RegistrationSuccessPage: React.FC = () => {
           <div className="mt-8 pt-6 border-t border-gray-200">
             <p className="text-sm text-gray-500">
               Need help? Contact us at{' '}
-              <a href="mailto:support@classdojo-nursery.com" className="text-blue-600 hover:underline">
-                support@classdojo-nursery.com
+              <a href="mailto:support@jamiaaaleabba.co.uk" className="text-blue-600 hover:underline">
+                support@jamiaaaleabba.co.uk
               </a>
             </p>
           </div>

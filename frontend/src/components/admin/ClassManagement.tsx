@@ -20,6 +20,7 @@ interface Student {
   student_name: string;
   student_id: string;
   date_of_birth: string;
+  age?: number;
   gender: string;
   is_active: boolean;
   current_class: {
@@ -38,9 +39,20 @@ interface Student {
   }>;
 }
 
+interface ApiErrorResponse {
+  response?: {
+    data?: {
+      message?: string;
+      error?: string;
+    };
+    status?: number;
+  };
+}
+
 interface Teacher {
   id: number;
   name: string;
+  full_name?: string;
   email: string;
   phone: string;
   employee_id: string;
@@ -52,6 +64,9 @@ interface Teacher {
     role: string;
   }>;
   is_active: boolean;
+  teacher_profile?: {
+    is_active: boolean;
+  };
 }
 
 const ClassManagement: React.FC = () => {
@@ -143,7 +158,7 @@ const ClassManagement: React.FC = () => {
         
         // Clean up teachers data to remove deleted class references and filter out inactive teachers
         // Show teachers where teacher_profile.is_active is not false (more lenient filtering)
-        const activeTeachersOnly = teachersData.filter(teacher => {
+        const activeTeachersOnly = teachersData.filter((teacher: Teacher) => {
           const isUserActive = teacher.is_active;
           const isProfileActive = teacher.teacher_profile?.is_active !== false;
           const passes = isUserActive && isProfileActive;
@@ -162,9 +177,9 @@ const ClassManagement: React.FC = () => {
         console.log('Active teachers after filtering:', activeTeachersOnly.length);
         console.log('Inactive teachers filtered out:', teachersData.length - activeTeachersOnly.length);
         
-        const cleanedTeachers = activeTeachersOnly.map(teacher => ({
+        const cleanedTeachers = activeTeachersOnly.map((teacher: Teacher) => ({
           ...teacher,
-          assigned_classes: teacher.assigned_classes ? teacher.assigned_classes.filter(cls => activeClassIds.has(cls.id)) : []
+          assigned_classes: teacher.assigned_classes ? teacher.assigned_classes.filter((cls: any) => activeClassIds.has(cls.id)) : []
         }));
         
         setTeachers(cleanedTeachers);
@@ -185,7 +200,7 @@ const ClassManagement: React.FC = () => {
       const allTeachersForDropdown = Array.isArray(teachersResponse) 
         ? teachersResponse 
         : (teachersResponse.teachers || []);
-      const teachersListData = allTeachersForDropdown.filter(teacher => 
+      const teachersListData = allTeachersForDropdown.filter((teacher: Teacher) => 
         teacher.is_active && teacher.teacher_profile?.is_active
       );
       console.log('All teachers for dropdown:', allTeachersForDropdown.length);
@@ -309,13 +324,14 @@ const ClassManagement: React.FC = () => {
         let errorMessage = 'Failed to delete class. Please try again.';
         
         // Handle specific error messages from the API
-        if (error?.response?.data?.message) {
-          errorMessage = error.response.data.message;
-        } else if (error?.response?.data?.error) {
-          errorMessage = error.response.data.error;
-        } else if (error?.response?.status === 400) {
+        const apiError = error as ApiErrorResponse;
+        if (apiError?.response?.data?.message) {
+          errorMessage = apiError.response.data.message;
+        } else if (apiError?.response?.data?.error) {
+          errorMessage = apiError.response.data.error;
+        } else if (apiError?.response?.status === 400) {
           errorMessage = 'Cannot delete class. Please ensure all dependencies are resolved first.';
-        } else if (error?.response?.status === 404) {
+        } else if (apiError?.response?.status === 404) {
           errorMessage = 'Class not found. It may have already been deleted.';
         }
         

@@ -1,14 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import { teacherApi } from '../../services/api';
 
-interface Student {
-  id: number;
-  student_name: string;
-  student_id: string;
-  date_of_birth: string;
-  gender: string;
-  medical_conditions?: string;
-  is_active: boolean;
+interface ApiErrorResponse {
+  response?: {
+    data?: {
+      message?: string;
+      error?: string;
+    };
+    status?: number;
+  };
 }
 
 interface Class {
@@ -135,12 +135,14 @@ const ActivityRecording: React.FC<ActivityRecordingProps> = ({ onActivityRecorde
     try {
       const activityData = {
         class_id: selectedClass,
-        session_date: activityDate,
-        activity_name: activityTitle,
+        activity_date: activityDate,
+        title: activityTitle,
+        activity_type: activityType,
         description: activityDescription || '',
-        category: activityType,
+        learning_objectives: objectives || '',
+        materials_used: materials || '',
         duration_minutes: duration,
-        notes: objectives || materials || ''
+        student_records: []
       };
 
       const response = await teacherApi.recordLearningActivity(activityData);
@@ -169,10 +171,11 @@ const ActivityRecording: React.FC<ActivityRecordingProps> = ({ onActivityRecorde
       console.error('Failed to save activity:', error);
       let errorMessage = 'Failed to save learning activity. Please try again.';
       
-      if (error?.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error?.response?.data?.error) {
-        errorMessage = error.response.data.error;
+      const apiError = error as ApiErrorResponse;
+      if (apiError?.response?.data?.message) {
+        errorMessage = apiError.response.data.message;
+      } else if (apiError?.response?.data?.error) {
+        errorMessage = apiError.response.data.error;
       }
       
       setNotification({

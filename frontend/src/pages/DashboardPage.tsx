@@ -3,7 +3,6 @@ import { useAuth } from '../utils/auth';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import ParentSettings from '../components/settings/ParentSettings';
 import ChildrenManagement from '../components/parent/ChildrenManagement';
-import DashboardChildrenCards from '../components/parent/DashboardChildrenCards';
 import LearningActivitiesChart from '../components/parent/LearningActivitiesChart';
 import AttendanceChart from '../components/parent/AttendanceChart';
 
@@ -35,7 +34,7 @@ const DashboardPage: React.FC = () => {
               {/* Children Cards - Hidden for now */}
               {/* <div className="lg:col-span-1">
                 <DashboardChildrenCards 
-                  selectedChildId={selectedChildId}
+                  selectedChildId={selectedChildId ?? undefined}
                   onChildSelect={setSelectedChildId}
                 />
               </div> */}
@@ -43,7 +42,7 @@ const DashboardPage: React.FC = () => {
               {/* Learning Activities Chart */}
               <div className="w-full">
                 <LearningActivitiesChart 
-                  selectedChildId={selectedChildId}
+                  selectedChildId={selectedChildId ?? undefined}
                   onChildSelect={setSelectedChildId}
                 />
               </div>
@@ -52,7 +51,7 @@ const DashboardPage: React.FC = () => {
             {/* Attendance Chart */}
             <div className="mt-6">
               <AttendanceChart 
-                selectedChildId={selectedChildId}
+                selectedChildId={selectedChildId ?? undefined}
                 onChildSelect={setSelectedChildId}
               />
             </div>
@@ -133,7 +132,7 @@ const DashboardPage: React.FC = () => {
         return (
           <div className="space-y-6">
             <LearningActivitiesChart 
-              selectedChildId={selectedChildId}
+              selectedChildId={selectedChildId ?? undefined}
               onChildSelect={setSelectedChildId}
             />
           </div>
@@ -143,7 +142,7 @@ const DashboardPage: React.FC = () => {
         return (
           <div className="space-y-6">
             <AttendanceChart 
-              selectedChildId={selectedChildId}
+              selectedChildId={selectedChildId ?? undefined}
               onChildSelect={setSelectedChildId}
             />
           </div>

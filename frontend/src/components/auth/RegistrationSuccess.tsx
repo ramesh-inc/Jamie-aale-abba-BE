@@ -109,7 +109,7 @@ export const RegistrationSuccess: React.FC<RegistrationSuccessProps> = ({ email 
           <p className="text-sm text-gray-600">
             Need help?{' '}
             <a
-              href="mailto:support@classdojo.com"
+              href="mailto:support@jamiaaaleabba.co.uk"
               className="text-primary-600 hover:text-primary-700 font-medium"
             >
               Contact Support

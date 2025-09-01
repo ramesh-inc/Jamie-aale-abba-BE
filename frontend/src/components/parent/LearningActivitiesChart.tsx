@@ -151,9 +151,6 @@ const LearningActivitiesChart: React.FC<LearningActivitiesChartProps> = ({
     }
   };
 
-  const getDefaultAvatar = (name: string) => {
-    return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=4F46E5&color=fff&size=40`;
-  };
 
   // Calculate max value for Y-axis scaling with better auto-scaling
   const maxValue = Math.max(...chartData.map(d => d.hours));

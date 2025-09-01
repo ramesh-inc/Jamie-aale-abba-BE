@@ -1,6 +1,16 @@
 import { useState, useEffect, useCallback } from 'react';
 import { teacherApi } from '../../services/api';
 
+interface ApiErrorResponse {
+  response?: {
+    data?: {
+      message?: string;
+      error?: string;
+    };
+    status?: number;
+  };
+}
+
 interface Student {
   id: number;
   student_name: string;
@@ -219,10 +229,11 @@ const AttendanceMarking: React.FC = () => {
       let errorMessage = 'Failed to save attendance. Please try again.';
       
       // Handle specific error messages from the API
-      if (error?.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error?.response?.data?.error) {
-        errorMessage = error.response.data.error;
+      const apiError = error as ApiErrorResponse;
+      if (apiError?.response?.data?.message) {
+        errorMessage = apiError.response.data.message;
+      } else if (apiError?.response?.data?.error) {
+        errorMessage = apiError.response.data.error;
       }
       
       setNotification({

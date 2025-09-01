@@ -88,7 +88,7 @@ const LoginPage: React.FC = () => {
           {/* Header */}
           <div className="text-center mb-8 max-w-md w-full">
             <div className="w-20 h-20 bg-gradient-to-r rounded-full mx-auto mb-4 flex items-center justify-center">
-              <img src="/src/assets/logo.png" alt="ClassDojo Nursery" className="w-24 h-24" />
+              <img src="/src/assets/logo.png" alt="Jamie Aale Abba - LMS" className="w-24 h-24" />
             </div>
             <h1 className="text-2xl font-bold text-gray-800 mb-2">Login to your account</h1>
           </div>
@@ -234,8 +234,8 @@ const LoginPage: React.FC = () => {
           <div className="mt-8 text-center max-w-md w-full">
             <p className="text-sm text-gray-500">
               Need help? Contact us at{' '}
-              <a href="mailto:support@classdojo-nursery.com" className="hover:underline" style={{ color: '#546848' }}>
-                support@classdojo-nursery.com
+              <a href="mailto:support@jamiaaaleabba.co.uk" className="hover:underline" style={{ color: '#546848' }}>
+                support@jamiaaaleabba.co.uk
               </a>
             </p>
           </div>

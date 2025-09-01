@@ -47,7 +47,6 @@ const ViewChildren: React.FC<ViewChildrenProps> = ({ onAddChild }) => {
   const [children, setChildren] = useState<Child[]>([]);
   const [selectedChild, setSelectedChild] = useState<ChildDetailData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [detailLoading, setDetailLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
 
@@ -70,7 +69,6 @@ const ViewChildren: React.FC<ViewChildrenProps> = ({ onAddChild }) => {
   };
 
   const handleViewDetails = async (childId: number) => {
-    setDetailLoading(true);
     try {
       const response = await parentApi.getChildDetails(childId);
       setSelectedChild(response);
@@ -78,8 +76,6 @@ const ViewChildren: React.FC<ViewChildrenProps> = ({ onAddChild }) => {
     } catch (error: any) {
       console.error('Error fetching child details:', error);
       setError('Failed to load child details. Please try again.');
-    } finally {
-      setDetailLoading(false);
     }
   };
 

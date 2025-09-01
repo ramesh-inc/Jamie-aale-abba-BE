@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { AuthTokenManager } from '../utils/auth';
+import type { TeacherUser, AdminUser } from '../types/auth';
 import AdminRegistrationForm from '../components/auth/AdminRegistrationForm';
 import TeacherRegistrationForm from '../components/auth/TeacherRegistrationForm';
 import AdminFirstTimePasswordChange from '../components/auth/AdminFirstTimePasswordChange';
@@ -9,7 +10,6 @@ import ActivityTimeline from '../components/dashboard/ActivityTimeline';
 import AdminSettings from '../components/settings/AdminSettings';
 import ClassManagement from '../components/admin/ClassManagement';
 import { adminApi } from '../services/api';
-import type { AdminUser, TeacherUser } from '../types/auth';
 
 type TabType = 'home' | 'messages' | 'student-account' | 'reports' | 'create-admin' | 'create-teacher' | 'manage-admins' | 'manage-teachers' | 'settings' | 'class-management';
 
@@ -375,14 +375,14 @@ export default function AdminDashboardPage() {
       // Filter teachers for Manage Teachers section:
       // - Show if teacher_profile.is_active is true (regardless of user is_active)
       // - Hide if teacher_profile.is_active is false (completely deleted)
-      const visibleTeachers = teacherResponse.teachers.filter(teacher => 
+      const visibleTeachers = teacherResponse.teachers.filter((teacher: TeacherUser) => 
         teacher.teacher_profile?.is_active !== false
       );
       setTeachers(visibleTeachers);
       
       // Count only active admins and teachers for stats
-      const activeAdminsCount = adminResponse.admins.filter(admin => admin.is_active).length;
-      const activeTeachersCount = teacherResponse.teachers.filter(teacher => 
+      const activeAdminsCount = adminResponse.admins.filter((admin: AdminUser) => admin.is_active).length;
+      const activeTeachersCount = teacherResponse.teachers.filter((teacher: TeacherUser) => 
         teacher.is_active && teacher.teacher_profile?.is_active
       ).length;
       

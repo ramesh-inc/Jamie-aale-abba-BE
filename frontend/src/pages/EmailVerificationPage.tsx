@@ -79,7 +79,7 @@ const EmailVerificationPage: React.FC = () => {
         <div className="bg-white rounded-xl shadow-lg p-8 text-center">
           {/* Logo */}
           <div className="w-20 h-20 bg-gradient-to-r rounded-full mx-auto mb-6 flex items-center justify-center">
-            <img src="/src/assets/logo.png" alt="ClassDojo Nursery" className="w-16 h-16" />
+            <img src="/src/assets/logo.png" alt="JAA-LMS" className="w-16 h-16" />
           </div>
 
           {/* Loading State */}
@@ -180,8 +180,8 @@ const EmailVerificationPage: React.FC = () => {
           <div className="mt-8 pt-6 border-t border-gray-200">
             <p className="text-sm text-gray-500">
               Need help? Contact us at{' '}
-              <a href="mailto:support@classdojo-nursery.com" className="text-blue-600 hover:underline">
-                support@classdojo-nursery.com
+              <a href="mailto:support@jamiaaaleabba.co.uk" className="text-blue-600 hover:underline">
+                support@jamiaaaleabba.co.uk
               </a>
             </p>
           </div>
