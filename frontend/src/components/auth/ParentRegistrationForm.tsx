@@ -212,7 +212,7 @@ export const ParentRegistrationForm: React.FC<ParentRegistrationFormProps> = ({
             <li>One uppercase letter (A-Z)</li>
             <li>One lowercase letter (a-z)</li>
             <li>One number (0-9)</li>
-            <li>One special character (@$!%*?&)</li>
+            <li>One special character (e.g., !@#$%^&*)</li>
           </ul>
         </div>
 
