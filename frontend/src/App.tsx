@@ -9,8 +9,10 @@ import TeacherPasswordChangePage from './pages/TeacherPasswordChangePage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import PasswordResetPage from './pages/PasswordResetPage';
+import NewsFeedPage from './pages/NewsFeedPage';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import { AuthTokenManager } from './utils/auth';
+import { NotificationProvider } from './contexts/NotificationContext';
 
 function App() {
   const isAuthenticated = AuthTokenManager.isAuthenticated();
@@ -34,9 +36,10 @@ function App() {
   };
 
   return (
-    <Router>
-      <div className="App">
-        <Routes>
+    <NotificationProvider>
+      <Router>
+        <div className="App">
+          <Routes>
           {/* Public Routes */}
           <Route 
             path="/login" 
@@ -113,6 +116,15 @@ function App() {
               </ProtectedRoute>
             } 
           />
+
+          <Route 
+            path="/newsfeed" 
+            element={
+              <ProtectedRoute requiredUserType="teacher">
+                <NewsFeedPage />
+              </ProtectedRoute>
+            } 
+          />
           
           {/* Default redirect */}
           <Route 
@@ -129,9 +141,10 @@ function App() {
               <Navigate to={getDashboardPath()} replace />
             } 
           />
-        </Routes>
-      </div>
-    </Router>
+          </Routes>
+        </div>
+      </Router>
+    </NotificationProvider>
   );
 }
 

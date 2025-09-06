@@ -1,5 +1,7 @@
 import uuid
 from django.contrib.auth.models import AbstractUser, BaseUserManager
+
+# Simple story models will be imported after all other models are defined
 from django.db import models
 from django.utils import timezone
 from datetime import timedelta
@@ -508,3 +510,80 @@ class AuditLog(models.Model):
 
     class Meta:
         db_table = 'audit_logs'
+
+
+class Story(models.Model):
+    STORY_TYPES = [
+        ('photo', 'Photo'),
+        ('video', 'Video'),
+        ('file', 'File'),
+        ('journal', 'Journal'),
+    ]
+
+    teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE, related_name='stories')
+    title = models.CharField(max_length=100)
+    content = models.TextField(blank=True, help_text="Story description/content")
+    story_type = models.CharField(max_length=10, choices=STORY_TYPES, default='journal')
+    target_classes = models.ManyToManyField(Class, related_name='stories', blank=True, help_text="Classes that can view this story")
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'stories'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.title} - {self.teacher.user.get_full_name()}"
+
+
+class StoryAttachment(models.Model):
+    ATTACHMENT_TYPES = [
+        ('image', 'Image'),
+        ('video', 'Video'), 
+        ('document', 'Document'),
+    ]
+
+    story = models.ForeignKey(Story, on_delete=models.CASCADE, related_name='attachments')
+    file_name = models.CharField(max_length=255)
+    file_url = models.URLField(max_length=500)
+    file_type = models.CharField(max_length=20, choices=ATTACHMENT_TYPES)
+    file_size = models.PositiveBigIntegerField(help_text="File size in bytes")
+    mime_type = models.CharField(max_length=100)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'story_attachments'
+
+    def __str__(self):
+        return f"{self.file_name} - {self.story.title}"
+
+
+class StoryLike(models.Model):
+    story = models.ForeignKey(Story, on_delete=models.CASCADE, related_name='likes')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='story_likes')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'story_likes'
+        unique_together = ['story', 'user']
+
+    def __str__(self):
+        return f"{self.user.get_full_name()} likes {self.story.title}"
+
+
+class StoryComment(models.Model):
+    story = models.ForeignKey(Story, on_delete=models.CASCADE, related_name='comments')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='story_comments')
+    comment_text = models.TextField()
+    parent_comment = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='replies')
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'story_comments'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Comment by {self.user.get_full_name()} on {self.story.title}"

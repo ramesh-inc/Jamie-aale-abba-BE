@@ -1346,3 +1346,97 @@ def get_student_attendance_data(request, student_id):
             {'error': f'Failed to retrieve attendance data: {str(e)}'}, 
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+
+
+@swagger_auto_schema(
+    method='delete',
+    operation_description="Delete a learning activity session that was recorded by the teacher",
+    operation_summary="Delete learning activity session",
+    tags=['Teacher - Learning Activities'],
+    security=[{'Bearer': []}],
+    manual_parameters=[
+        openapi.Parameter(
+            'session_id',
+            openapi.IN_PATH,
+            description="ID of the learning session to delete",
+            type=openapi.TYPE_INTEGER,
+            required=True
+        ),
+    ],
+    responses={
+        200: openapi.Response(
+            description="Learning activity deleted successfully",
+            examples={
+                "application/json": {
+                    "success": True,
+                    "message": "Learning activity deleted successfully"
+                }
+            }
+        ),
+        403: openapi.Response(
+            description="Permission denied - can only delete your own activities",
+            examples={
+                "application/json": {
+                    "error": "You can only delete your own learning activities"
+                }
+            }
+        ),
+        404: openapi.Response(
+            description="Learning session not found",
+            examples={
+                "application/json": {
+                    "error": "Learning session not found"
+                }
+            }
+        ),
+        500: openapi.Response(description="Internal server error")
+    }
+)
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated, IsTeacherUser])
+def delete_learning_activity(request, session_id):
+    """
+    Delete a learning activity session recorded by the teacher.
+    Teachers can only delete their own recorded activities.
+    """
+    try:
+        # Get teacher profile
+        try:
+            teacher = Teacher.objects.get(user=request.user)
+        except Teacher.DoesNotExist:
+            return Response(
+                {'error': 'Teacher profile not found'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Get the learning session
+        try:
+            learning_session = ClassLearningSession.objects.get(
+                id=session_id,
+                teacher=teacher  # Ensure teacher can only delete their own activities
+            )
+        except ClassLearningSession.DoesNotExist:
+            return Response(
+                {'error': 'Learning session not found or you do not have permission to delete it'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Store session info for response
+        session_title = learning_session.activity.activity_name if learning_session.activity else 'Learning Session'
+        
+        # Delete associated student learning records first
+        StudentLearningRecord.objects.filter(class_session=learning_session).delete()
+        
+        # Delete the learning session
+        learning_session.delete()
+        
+        return Response({
+            'success': True,
+            'message': f'Learning activity "{session_title}" has been deleted successfully'
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        return Response(
+            {'error': f'Failed to delete learning activity: {str(e)}'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )

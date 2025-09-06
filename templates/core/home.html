@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block title %}Welcome to Jamie Aale Abba - Nursery Management System{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="jumbotron bg-light p-5 rounded">
+            <div class="text-center">
+                <i class="fas fa-graduation-cap fa-4x text-primary mb-4"></i>
+                <h1 class="display-4">Jamie Aale Abba</h1>
+                <p class="lead">Nursery Management System</p>
+                <hr class="my-4">
+                <p class="mb-4">Welcome to our comprehensive nursery management platform where teachers, parents, and administrators can collaborate to provide the best care and education for children.</p>
+                
+                {% if user.is_authenticated %}
+                    <a class="btn btn-primary btn-lg" href="{% url 'core:dashboard' %}" role="button">
+                        <i class="fas fa-tachometer-alt"></i> Go to Dashboard
+                    </a>
+                {% else %}
+                    <a class="btn btn-primary btn-lg me-2" href="{% url 'login' %}" role="button">
+                        <i class="fas fa-sign-in-alt"></i> Login
+                    </a>
+                    <a class="btn btn-outline-secondary btn-lg" href="{% url 'v1_auth:register' %}" role="button">
+                        <i class="fas fa-user-plus"></i> Register as Parent
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

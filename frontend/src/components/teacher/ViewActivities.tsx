@@ -37,6 +37,8 @@ const ViewActivities: React.FC<ViewActivitiesProps> = ({ refreshTrigger }) => {
   const [selectedClassId, setSelectedClassId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<number | null>(null);
 
   useEffect(() => {
     fetchClasses();
@@ -146,6 +148,24 @@ const ViewActivities: React.FC<ViewActivitiesProps> = ({ refreshTrigger }) => {
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteActivity = async (activityId: number) => {
+    setDeletingId(activityId);
+    try {
+      await teacherApi.deleteLearningActivity(activityId);
+      // Remove the deleted activity from the state
+      setActivities(prev => prev.filter(activity => activity.id !== activityId));
+      setShowDeleteConfirm(null);
+      setError('Activity deleted successfully');
+      // Clear success message after 3 seconds
+      setTimeout(() => setError(null), 3000);
+    } catch (error: any) {
+      console.error('Error deleting activity:', error);
+      setError(error?.response?.data?.error || 'Failed to delete activity. Please try again.');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -291,20 +311,29 @@ const ViewActivities: React.FC<ViewActivitiesProps> = ({ refreshTrigger }) => {
                         </span>
                         <span className="flex items-center">
                           <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          {activity.start_time && activity.end_time 
-                            ? `${formatTime(activity.start_time)} - ${formatTime(activity.end_time)}`
-                            : `${activity.duration_minutes} minutes`
-                          }
-                        </span>
-                        <span className="flex items-center">
-                          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                           </svg>
                           {activity.student_count} students
                         </span>
                       </div>
+                    </div>
+                    
+                    {/* Delete Button */}
+                    <div className="flex-shrink-0">
+                      <button
+                        onClick={() => setShowDeleteConfirm(activity.id)}
+                        disabled={deletingId === activity.id}
+                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="Delete Activity"
+                      >
+                        {deletingId === activity.id ? (
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+                        ) : (
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        )}
+                      </button>
                     </div>
                   </div>
 
@@ -346,6 +375,44 @@ const ViewActivities: React.FC<ViewActivitiesProps> = ({ refreshTrigger }) => {
           </>
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <div className="flex items-center mb-4">
+              <div className="flex-shrink-0 w-10 h-10 mx-auto">
+                <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                  <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L4.348 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+            <div className="text-center">
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Delete Learning Activity</h3>
+              <p className="text-sm text-gray-500 mb-6">
+                Are you sure you want to delete this learning activity? This action cannot be undone.
+              </p>
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => setShowDeleteConfirm(null)}
+                  className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleDeleteActivity(showDeleteConfirm)}
+                  disabled={deletingId === showDeleteConfirm}
+                  className="flex-1 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {deletingId === showDeleteConfirm ? 'Deleting...' : 'Delete'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -13,6 +13,13 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
+# Use PyMySQL as MySQL client for cPanel compatibility
+try:
+    import pymysql
+    pymysql.install_as_MySQLdb()
+except ImportError:
+    pass
+
 # Load environment variables from .env file
 load_dotenv()
 
@@ -85,12 +92,28 @@ WSGI_APPLICATION = 'classdojo_project.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+# Use SQLite for local development
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+# MySQL configuration (commented out for local development)
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.mysql',
+#         'NAME': os.getenv('MYSQL_DATABASE', 'classdojo_db'),
+#         'USER': os.getenv('MYSQL_USER', 'root'),
+#         'PASSWORD': os.getenv('MYSQL_PASSWORD', ''),
+#         'HOST': os.getenv('MYSQL_HOST', 'localhost'),
+#         'PORT': os.getenv('MYSQL_PORT', '3306'),
+#         'OPTIONS': {
+#             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+#         },
+#     }
+# }
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -127,6 +150,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+
+# Media files
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -217,6 +244,67 @@ else:
 DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'Jamie Aale Abba <noreply@jamiaaaleabba.co.uk>')
 FRONTEND_URL = 'http://localhost:5174'  # React frontend URL
 
+# Logging Configuration (cPanel compatible)
+# LOGGING = {
+#     'version': 1,
+#     'disable_existing_loggers': False,
+#     'formatters': {
+#         'verbose': {
+#             'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+#             'style': '{',
+#         },
+#         'simple': {
+#             'format': '{levelname} {message}',
+#             'style': '{',
+#         },
+#     },
+#     'handlers': {
+#         'console': {
+#             'level': 'INFO',
+#             'class': 'logging.StreamHandler',
+#             'formatter': 'simple',
+#         },
+#     },
+#     'root': {
+#         'handlers': ['console'],
+#         'level': 'INFO',
+#     },
+#     'loggers': {
+#         'django': {
+#             'handlers': ['console'],
+#             'level': 'INFO',
+#             'propagate': False,
+#         },
+#     },
+# }
+#
+# # Add file logging only if we have write permissions (not in cPanel shared hosting)
+# try:
+#     import tempfile
+#     log_dir = os.environ.get('LOG_DIR', os.path.join(BASE_DIR, 'logs'))
+#     if not os.path.exists(log_dir):
+#         os.makedirs(log_dir, exist_ok=True)
+#
+#     # Test if we can write to the log directory
+#     test_file = os.path.join(log_dir, 'test_write.log')
+#     with open(test_file, 'w') as f:
+#         f.write('test')
+#     os.remove(test_file)
+#
+#     # If we can write, add file handler
+#     LOGGING['handlers']['file'] = {
+#         'level': 'INFO',
+#         'class': 'logging.FileHandler',
+#         'filename': os.path.join(log_dir, 'django.log'),
+#         'formatter': 'verbose',
+#     }
+#     LOGGING['root']['handlers'].append('file')
+#     LOGGING['loggers']['django']['handlers'].append('file')
+#
+# except (OSError, PermissionError):
+#     # If we can't create or write to log directory, just use console logging
+#     pass
+
 # Swagger Settings
 SWAGGER_SETTINGS = {
     'SECURITY_DEFINITIONS': {
@@ -229,6 +317,6 @@ SWAGGER_SETTINGS = {
     },
     'USE_SESSION_AUTH': False,
     'VALIDATOR_URL': None,
-    'AUTO_SCHEMA_TITLE': 'ClassDojo Nursery Management API',
+    'AUTO_SCHEMA_TITLE': 'Jamie Aale Abba Nursery Management API',
     'AUTO_SCHEMA_DESCRIPTION': 'API for managing nursery operations including authentication, class management, attendance, and learning activities.',
 }

@@ -1,0 +1,26 @@
+# Minimal requirements for cPanel deployment
+# Core Django dependencies
+Django==5.2.*
+djangorestframework==3.15.*
+django-cors-headers==4.3.*
+python-dotenv==1.0.*
+
+# JWT Authentication
+djangorestframework-simplejwt==5.3.*
+
+# API Documentation
+drf-yasg==1.21.*
+
+# Database (cPanel compatible)
+PyMySQL==1.1.*
+
+# Basic utilities
+Pillow==10.4.*
+pytz==2023.3.*
+
+# Remove packages that might not work in shared hosting:
+# - celery (requires background workers)
+# - redis (requires Redis server)
+# - django-debug-toolbar (development only)
+# - gunicorn (not needed in cPanel)
+# - whitenoise (cPanel handles static files)

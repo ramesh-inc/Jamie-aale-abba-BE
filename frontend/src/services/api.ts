@@ -530,6 +530,10 @@ export const teacherApi = {
     const response = await api.get('/teacher/learning-activities/', { params });
     return response.data;
   },
+  deleteLearningActivity: async (sessionId: number) => {
+    const response = await api.delete(`/teacher/learning-activities/${sessionId}/delete/`);
+    return response.data;
+  },
 
   // Teacher student reports endpoints
   getStudentLearningActivities: async (studentId: number, year: string) => {
@@ -547,10 +551,141 @@ export const teacherApi = {
   },
 };
 
+// Story API functions (News Feed)
+export const storyApi = {
+  // Get all stories accessible to the user
+  getStories: async () => {
+    const response = await api.get('/newsfeed/stories/');
+    return response.data;
+  },
+
+  // Get teacher's own stories
+  getTeacherStories: async () => {
+    const response = await api.get('/newsfeed/teacher/stories/');
+    return response.data;
+  },
+
+  // Get story details with likes and comments
+  getStory: async (storyId: number) => {
+    const response = await api.get(`/newsfeed/stories/${storyId}/`);
+    return response.data;
+  },
+
+  // Create a new story
+  createStory: async (data: FormData) => {
+    const response = await api.post('/newsfeed/stories/', data, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+
+  // Update story
+  updateStory: async (storyId: number, data: any) => {
+    const response = await api.put(`/newsfeed/stories/${storyId}/`, data);
+    return response.data;
+  },
+
+  // Delete story
+  deleteStory: async (storyId: number) => {
+    const response = await api.delete(`/newsfeed/stories/${storyId}/`);
+    return response.data;
+  },
+
+  // Like/unlike story
+  toggleLike: async (storyId: number) => {
+    const response = await api.post(`/newsfeed/stories/${storyId}/like/`);
+    return response.data;
+  },
+
+  // Get story comments
+  getComments: async (storyId: number) => {
+    const response = await api.get(`/newsfeed/stories/${storyId}/comments/`);
+    return response.data;
+  },
+
+  // Add comment to story
+  addComment: async (storyId: number, data: { comment_text: string; parent_comment?: number }) => {
+    const response = await api.post(`/newsfeed/stories/${storyId}/add_comment/`, data);
+    return response.data;
+  },
+
+  // Update comment
+  updateComment: async (commentId: number, data: { comment_text: string }) => {
+    const response = await api.put(`/newsfeed/comments/${commentId}/`, data);
+    return response.data;
+  },
+
+  // Delete comment
+  deleteComment: async (commentId: number) => {
+    const response = await api.delete(`/newsfeed/comments/${commentId}/`);
+    return response.data;
+  },
+
+  // Get teacher's assigned classes
+  getTeacherClasses: async () => {
+    const response = await api.get('/newsfeed/teacher/classes/');
+    return response.data;
+  },
+};
+
 // Convenience exports
 export const registerParent = authApi.registerParent;
 export const loginUser = authApi.login;
 export const verifyEmail = authApi.verifyEmail;
 export const resendVerification = authApi.resendVerification;
+
+// Simple Story API (new clean backend)
+export const simpleStoryApi = {
+  // Get all stories
+  getStories: async (page: number = 1, pageSize: number = 10) => {
+    const response = await api.get(`/simple-newsfeed/stories/?page=${page}&page_size=${pageSize}`);
+    return response.data;
+  },
+  // Get stories by current teacher
+  getTeacherStories: async (page: number = 1, pageSize: number = 10) => {
+    const response = await api.get(`/simple-newsfeed/stories/?mine=true&page=${page}&page_size=${pageSize}`);
+    return response.data;
+  },
+
+  // Create a new story
+  createStory: async (data: FormData) => {
+    const response = await api.post('/simple-newsfeed/stories/', data, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+
+  // Like/unlike story
+  toggleLike: async (storyId: number) => {
+    const response = await api.post(`/simple-newsfeed/stories/${storyId}/like/`);
+    return response.data;
+  },
+
+  // Get story comments
+  getComments: async (storyId: number) => {
+    const response = await api.get(`/simple-newsfeed/stories/${storyId}/comments/`);
+    return response.data;
+  },
+
+  // Add comment
+  addComment: async (storyId: number, data: { comment_text: string }) => {
+    const response = await api.post(`/simple-newsfeed/stories/${storyId}/add_comment/`, data);
+    return response.data;
+  },
+  // Delete story (teachers only, own stories only)
+  deleteStory: async (storyId: number) => {
+    const response = await api.delete(`/simple-newsfeed/stories/${storyId}/`);
+    return response.data;
+  },
+  // Delete comment (admins can delete any comment, users can delete their own)
+  deleteComment: async (commentId: number) => {
+    const response = await api.delete(`/simple-newsfeed/stories/comments/${commentId}/delete/`);
+    return response.data;
+  },
+};
 
 export default api;

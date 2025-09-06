@@ -5,13 +5,12 @@ import AdminRegistrationForm from '../components/auth/AdminRegistrationForm';
 import TeacherRegistrationForm from '../components/auth/TeacherRegistrationForm';
 import AdminFirstTimePasswordChange from '../components/auth/AdminFirstTimePasswordChange';
 import DashboardLayout from '../components/layout/DashboardLayout';
-import ProgressChart from '../components/dashboard/ProgressChart';
-import ActivityTimeline from '../components/dashboard/ActivityTimeline';
 import AdminSettings from '../components/settings/AdminSettings';
 import ClassManagement from '../components/admin/ClassManagement';
+import NewsFeed from '../components/story/NewsFeed';
 import { adminApi } from '../services/api';
 
-type TabType = 'home' | 'messages' | 'student-account' | 'reports' | 'create-admin' | 'create-teacher' | 'manage-admins' | 'manage-teachers' | 'settings' | 'class-management';
+type TabType = 'home' | 'newsfeed' | 'messages' | 'student-account' | 'reports' | 'create-admin' | 'create-teacher' | 'manage-admins' | 'manage-teachers' | 'settings' | 'class-management';
 
 interface ConfirmationModalProps {
   message: string;
@@ -330,6 +329,15 @@ const EditTeacherModal: React.FC<EditTeacherModalProps> = ({ teacher, onSave, on
 export default function AdminDashboardPage() {
   const [activeTab, setActiveTab] = useState<TabType>('home');
   const [adminStats, setAdminStats] = useState({ admins: 0, teachers: 0 });
+  const [dashboardStats, setDashboardStats] = useState({
+    total_classes: 0,
+    total_students: 0,
+    total_teachers: 0,
+    enrolled_students: 0,
+    unassigned_students: 0,
+    assigned_teachers: 0,
+    unassigned_teachers: 0
+  });
   const [admins, setAdmins] = useState<AdminUser[]>([]);
   const [teachers, setTeachers] = useState<TeacherUser[]>([]);
   const [loading, setLoading] = useState(false);
@@ -362,9 +370,10 @@ export default function AdminDashboardPage() {
   const loadStats = async () => {
     setLoading(true);
     try {
-      const [adminResponse, teacherResponse] = await Promise.all([
+      const [adminResponse, teacherResponse, dashboardStatsResponse] = await Promise.all([
         adminApi.getAdmins(),
         adminApi.getTeachers(),
+        adminApi.getDashboardStats(),
       ]);
 
       // Filter admins for Manage Admins section:
@@ -390,6 +399,9 @@ export default function AdminDashboardPage() {
         admins: activeAdminsCount,
         teachers: activeTeachersCount,
       });
+      
+      // Set dashboard statistics
+      setDashboardStats(dashboardStatsResponse);
     } catch (error) {
       console.error('Failed to load stats:', error);
     } finally {
@@ -400,12 +412,16 @@ export default function AdminDashboardPage() {
   const handleAdminCreated = (newAdmin: AdminUser) => {
     setAdmins(prev => [...prev, newAdmin]);
     setAdminStats(prev => ({ ...prev, admins: prev.admins + 1 }));
+    // Refresh dashboard stats
+    loadStats();
     setActiveTab('home');
   };
 
   const handleTeacherCreated = (newTeacher: TeacherUser) => {
     setTeachers(prev => [...prev, newTeacher]);
     setAdminStats(prev => ({ ...prev, teachers: prev.teachers + 1 }));
+    // Refresh dashboard stats
+    loadStats();
     setActiveTab('home');
   };
 
@@ -534,19 +550,9 @@ export default function AdminDashboardPage() {
     switch (activeTab) {
       case 'home':
         return (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Main Chart Area */}
-            <div className="lg:col-span-2">
-              <ProgressChart />
-            </div>
-            
-            {/* Activity Timeline */}
-            <div className="lg:col-span-1">
-              <ActivityTimeline />
-            </div>
-
+          <div className="space-y-6">
             {/* Stats Cards */}
-            <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
                 <h3 className="text-lg font-semibold text-blue-900 mb-2">Admin Accounts</h3>
                 <p className="text-3xl font-bold text-blue-600">{adminStats.admins}</p>
@@ -555,24 +561,27 @@ export default function AdminDashboardPage() {
               
               <div className="bg-green-50 border border-green-200 rounded-lg p-6">
                 <h3 className="text-lg font-semibold text-green-900 mb-2">Teacher Accounts</h3>
-                <p className="text-3xl font-bold text-green-600">{adminStats.teachers}</p>
+                <p className="text-3xl font-bold text-green-600">{dashboardStats.total_teachers}</p>
                 <p className="text-sm text-green-700 mt-1">Total teachers</p>
               </div>
 
               <div className="bg-purple-50 border border-purple-200 rounded-lg p-6">
                 <h3 className="text-lg font-semibold text-purple-900 mb-2">Total Students</h3>
-                <p className="text-3xl font-bold text-purple-600">245</p>
+                <p className="text-3xl font-bold text-purple-600">{dashboardStats.total_students}</p>
                 <p className="text-sm text-purple-700 mt-1">Active students</p>
               </div>
 
               <div className="bg-orange-50 border border-orange-200 rounded-lg p-6">
                 <h3 className="text-lg font-semibold text-orange-900 mb-2">Total Classes</h3>
-                <p className="text-3xl font-bold text-orange-600">12</p>
+                <p className="text-3xl font-bold text-orange-600">{dashboardStats.total_classes}</p>
                 <p className="text-sm text-orange-700 mt-1">Active classes</p>
               </div>
             </div>
           </div>
         );
+
+      case 'newsfeed':
+        return <NewsFeed />;
 
       case 'messages':
         return (
@@ -821,6 +830,7 @@ export default function AdminDashboardPage() {
   const getPageTitle = (tab: TabType) => {
     switch (tab) {
       case 'home': return 'Dashboard Overview';
+      case 'newsfeed': return 'News Feed';
       case 'messages': return 'Messages';
       case 'student-account': return 'Student Accounts';
       case 'reports': return 'Reports';
@@ -837,6 +847,7 @@ export default function AdminDashboardPage() {
   const getPageSubtitle = (tab: TabType) => {
     switch (tab) {
       case 'home': return 'Welcome to your administration dashboard';
+      case 'newsfeed': return 'Create and manage stories, view and moderate all posts';
       case 'create-admin': return 'Create new administrator accounts for your institution';
       case 'create-teacher': return 'Create new teacher accounts and assign permissions';
       case 'manage-admins': return 'View and manage existing administrator accounts';

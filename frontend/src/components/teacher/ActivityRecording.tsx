@@ -135,9 +135,9 @@ const ActivityRecording: React.FC<ActivityRecordingProps> = ({ onActivityRecorde
     try {
       const activityData = {
         class_id: selectedClass,
-        activity_date: activityDate,
-        title: activityTitle,
-        activity_type: activityType,
+        session_date: activityDate,
+        activity_name: activityTitle,
+        category: activityType,
         description: activityDescription || '',
         learning_objectives: objectives || '',
         materials_used: materials || '',

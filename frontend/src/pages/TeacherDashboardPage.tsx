@@ -9,8 +9,9 @@ import ActivitiesManagement from '../components/teacher/ActivitiesManagement';
 import MyClasses from '../components/teacher/MyClasses';
 import Students from '../components/teacher/Students';
 import Reports from '../components/teacher/Reports';
+import NewsFeed from '../components/story/NewsFeed';
 
-type TabType = 'home' | 'classes' | 'students' | 'attendance' | 'attendance-view' | 'activities' | 'messages' | 'reports' | 'settings';
+type TabType = 'home' | 'newsfeed' | 'classes' | 'students' | 'attendance' | 'attendance-view' | 'activities' | 'messages' | 'reports' | 'settings';
 
 const TeacherDashboardPage: React.FC = () => {
   const { user } = useAuth();
@@ -27,6 +28,9 @@ const TeacherDashboardPage: React.FC = () => {
 
   const renderTabContent = () => {
     switch (activeTab) {
+      case 'newsfeed':
+        return <NewsFeed />;
+        
       case 'home':
         return (
           <div className="space-y-6">
@@ -72,7 +76,18 @@ const TeacherDashboardPage: React.FC = () => {
             </div>
 
             {/* Quick Actions */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h3 className="text-lg font-semibold text-gray-800 mb-2">News Feed</h3>
+                <p className="text-gray-600 mb-4">Create and share stories with parents</p>
+                <button 
+                  onClick={() => setActiveTab('newsfeed')}
+                  className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+                >
+                  View News Feed
+                </button>
+              </div>
+
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                 <h3 className="text-lg font-semibold text-gray-800 mb-2">My Classes</h3>
                 <p className="text-gray-600 mb-4">View and manage your assigned classes</p>
@@ -192,6 +207,7 @@ const TeacherDashboardPage: React.FC = () => {
   const getPageTitle = (tab: TabType) => {
     switch (tab) {
       case 'home': return 'Teacher Dashboard';
+      case 'newsfeed': return 'News Feed';
       case 'classes': return 'My Classes';
       case 'students': return 'Students';
       case 'attendance': return 'Mark Attendance';
@@ -207,6 +223,7 @@ const TeacherDashboardPage: React.FC = () => {
   const getPageSubtitle = (tab: TabType) => {
     switch (tab) {
       case 'home': return 'Welcome to your teacher dashboard';
+      case 'newsfeed': return 'Create and share stories with your students and parents';
       case 'classes': return 'Manage your assigned classes';
       case 'students': return 'View and manage student profiles';
       case 'attendance': return 'Record daily student attendance';

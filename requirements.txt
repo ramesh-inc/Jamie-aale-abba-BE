@@ -11,7 +11,8 @@ djangorestframework-simplejwt==5.3.*
 drf-yasg==1.21.*
 
 # Database
-mysqlclient==2.2.*
+# mysqlclient==2.2.*  # Commented out - use PyMySQL for cPanel compatibility
+PyMySQL==1.1.*
 django-extensions==3.2.*
 
 # Async Task Processing

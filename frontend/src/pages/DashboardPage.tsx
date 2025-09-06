@@ -5,8 +5,9 @@ import ParentSettings from '../components/settings/ParentSettings';
 import ChildrenManagement from '../components/parent/ChildrenManagement';
 import LearningActivitiesChart from '../components/parent/LearningActivitiesChart';
 import AttendanceChart from '../components/parent/AttendanceChart';
+import NewsFeed from '../components/story/NewsFeed';
 
-type TabType = 'home' | 'children' | 'activities' | 'messages' | 'attendance' | 'payments' | 'settings';
+type TabType = 'home' | 'newsfeed' | 'children' | 'activities' | 'messages' | 'attendance' | 'payments' | 'settings';
 
 const DashboardPage: React.FC = () => {
   const { user } = useAuth();
@@ -148,6 +149,9 @@ const DashboardPage: React.FC = () => {
           </div>
         );
 
+      case 'newsfeed':
+        return <NewsFeed />;
+
       case 'settings':
         return <ParentSettings />;
 
@@ -169,6 +173,7 @@ const DashboardPage: React.FC = () => {
   const getPageTitle = (tab: TabType) => {
     switch (tab) {
       case 'home': return 'Parent Dashboard';
+      case 'newsfeed': return 'News Feed';
       case 'children': return 'My Children';
       case 'activities': return 'Activities';
       case 'messages': return 'Messages';
@@ -182,6 +187,7 @@ const DashboardPage: React.FC = () => {
   const getPageSubtitle = (tab: TabType) => {
     switch (tab) {
       case 'home': return 'Welcome to your parent dashboard';
+      case 'newsfeed': return 'View updates and stories from teachers and school staff';
       case 'children': return 'View and manage your children\'s profiles';
       case 'activities': return 'Track your child\'s daily activities and progress';
       case 'messages': return 'Communicate with teachers and staff';

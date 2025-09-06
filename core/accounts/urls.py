@@ -44,6 +44,7 @@ from .teacher_views import (
     get_teacher_activities,
     get_student_learning_activities,
     get_student_attendance_data,
+    delete_learning_activity,
 )
 from .parent_child_views import (
     ParentChildrenListView,
@@ -90,6 +91,7 @@ urlpatterns = [
     # Teacher learning activities endpoints (for /api/v1/teacher/)
     path('teacher/learning-activities/record/', record_learning_activity, name='teacher_record_learning_activity'),
     path('teacher/learning-activities/', get_teacher_activities, name='teacher_get_activities'),
+    path('teacher/learning-activities/<int:session_id>/delete/', delete_learning_activity, name='teacher_delete_learning_activity'),
     
     # Teacher student reports endpoints (for /api/v1/teacher/)
     path('teacher/students/<int:student_id>/learning-activities/', get_student_learning_activities, name='teacher_student_learning_activities'),
